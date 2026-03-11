@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tạp Hóa Thanh Trúc</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<div id="toast"></div>
+<!-- Overlay Lịch sử -->
+<div id="history-overlay">
+    <div id="history-header">
+        <h2>📜 Lịch Sử</h2>
+        <span onclick="toggleHistory()">❌</span>
+    </div>
+    <!-- nút xóa lịch sử -->
+    <button id="clear-history" onclick="clearHistory()">🗑 Xóa lịch sử</button>
+    <div id="history-content"></div>
+</div>
+
+
+<body>
+<!-- Sidebar -->
+<div id="sidebar">
+    <h2>Danh Mục</h2>
+    <ul id="categories"></ul>
+</div>
+
+<!-- Main -->
+<div id="main-container">
+    <!-- Top bar -->
+    <div id="top-bar">
+        <span id="menu-btn">☰</span>
+        <div id="current-time" style="color: #ffdd57; font-size: 13px; margin-left: 10px; font-weight: bold; line-height: 1.2;"></div>
+
+        <h2>Danh Sách Sản Phẩm</h2>
+        <div id="cart-icon" onclick="toggleCart()">
+            🛒 <span id="cart-count">0</span>
+        </div>
+    </div>
+
+    <!-- Search -->
+    <input type="text" id="search-box" placeholder="Nhập chữ cái đầu...">
+
+    <!-- Products -->
+    <div id="product-container" class="product-container"></div>
+</div>
+
+<!-- Overlay Cart -->
+<div id="cart-overlay">
+    <div id="cart-header">
+        <h2>🛒 Giỏ Hàng <span id="cart-total-count">(0)</span></h2>
+        <button id="clear-all-btn" onclick="clearAllCart()" style="background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; margin-left: auto; margin-right: 15px;">
+            🗑 Xóa tất cả
+        </button>
+        <span onclick="toggleCart()" style="cursor:pointer">❌</span>
+    </div>
+    <table>
+        <thead>
+        <tr>
+            <th>SL</th>
+            <th>Sản phẩm</th>
+            <th>Xóa</th>
+        </tr>
+        </thead>
+        <tbody id="selected-list"></tbody>
+    </table>
+    <button id="copyBtn" onclick="copyList()">📋 Sao chép</button>
+</div>
+
+<script src="products.js"></script>
+<script src="app.js"></script>
+
+<div id="confirm-overlay" class="confirm-overlay">
+    <div class="confirm-box">
+        <p id="confirm-message"></p>
+        <div class="confirm-buttons">
+            <button id="confirm-yes">Đồng ý</button>
+            <button id="confirm-no">Hủy</button>
+        </div>
+    </div>
+</div>
+
+
+</body>
+</html>
