@@ -8,7 +8,7 @@ const products = {
     "Nước mắm nam ngư 500ml", "Nước mắm nam ngư 750ml", "Nước mắm Hưng Thịnh 40 độ", "Trà dứa Kim Lộc"
   ],
   "Mì, cháo & thực phẩm ăn liền": [
-    "Mì cung đình ly", "Mì cung đình KooL Spaghetti", "Mì hảo hảo bịch",
+    "Mì cung đình ly", "Mì cung đình KooL Spaghetti", "Mì hảo hảo bịch", "Mỳ ly",
     "Mì hảo hảo ly", "Mì Omachi trộn bịch", "Mì Modern Lẩu thái tôm Ly",
     "Mì Omachi Tôm Chua Cay Bịch", "Mì Omachi Sườn Hầm Ngũ Quả", "Mì Omachi Xốt Bò Hầm",
     "Mì 3 miền chua cay bịch", "Mì 3 miền đặc biệt", "Mì gấu đỏ chua cay bịch", "Mì gấu đỏ thịt bầm bịch",
