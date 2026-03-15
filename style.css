@@ -679,3 +679,24 @@ body {
     width: 100%;
   }
 }
+
+/* Hình thu nhỏ trong giỏ hàng */
+.cart-thumb {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: 4px;
+  background: #3a3a4d;
+  flex-shrink: 0; /* Không cho ảnh bị bóp méo */
+}
+
+/* Chỉnh lại cột sản phẩm để chứa được cả ảnh và chữ */
+#cart-overlay td:nth-child(2) {
+  display: flex;
+  align-items: center;
+  min-height: 60px;
+}
+#selected-list td {
+    vertical-align: middle;
+    padding: 10px 5px; /* Tăng padding để bảng thoáng hơn */
+}
