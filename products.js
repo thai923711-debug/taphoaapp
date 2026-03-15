@@ -52,7 +52,7 @@ const products = {
     "Bộ bài tiến lên", "Ống quẹt khò", "Ống quẹt bấm", "Ống quẹt đá",
     "Thuốc lá Jet", "Thuốc lá Jet Việt Trắng", "Thuốc lá Jet Việt Xanh",
     "Thuốc lá bastos xanh", "Thuốc lá bastos tím", "Thuốc lá sài gòn bạc",
-    "Thuốc lá sài gòn vàng", "Thuốc lá mèo mi", "Thuốc lá mèo đỏ",
+    "Thuốc lá sài gòn vàng", "Thuốc lá mèo mi", "Thuốc lá mèo đỏ", "Thuốc lá Sài Gòn Dưa Lưới",
     "Thuốc lá khánh hội", "Thuốc lá hòa bình hộp", "Thuốc lá 3 số 555",
     "Dầu ăn An Long 1 Lít", "Dầu ăn An Long 2 Lít", "Dầu ăn An Long 5 Lít",
     "Dầu ăn Tường An 1 Lít", "Dầu ăn Tường An 2 Lít", "Dầu ăn Tường An 5 Lít",
