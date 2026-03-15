@@ -11,7 +11,8 @@ body {
 
 /* Sidebar */
 #sidebar {
-  width: 220px;
+  width: 260px;
+  max-width: 80%; /* Không bao giờ vượt quá 80% màn hình điện thoại */
   background: #2c2c3e;
   padding: 15px;
   overflow-y: auto;
@@ -147,30 +148,30 @@ body {
     box-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
 }
 
-/* Product container scroll */
+/* Tìm đoạn #product-container và thay bằng: */
 #product-container {
   flex: 1;
   overflow-y: auto;
-  padding: 10px;
+  padding: 15px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 140px)); /* mỗi ô cố định 140px */
-  justify-content: start; /* các ô căn trái, không giãn full hàng */
-  gap: 10px;
+  /* Tự động tính toán số cột, tối thiểu 130px, tối đa là 1 phần đều nhau */
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); 
+  gap: 15px;
+  justify-content: center;
 }
 
-
-
-/* Card sản phẩm kiểu mới */
+/* Card sản phẩm tự co giãn theo lưới */
 .product {
+  width: 100%; /* Đảm bảo card luôn chiếm hết ô lưới */
   background: #1e293b;
   border: 1px solid #334155;
   border-radius: 16px;
-  padding: 20px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 15px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  justify-content: space-between;
+  text-align: center;
 }
 
 .product:hover {
@@ -629,4 +630,45 @@ body {
 
 .shake {
     animation: shake 0.3s ease-in-out;
+}
+/* --- Tối ưu cho Tablet (iPad) và Mobile ngang --- */
+@media (max-width: 1024px) {
+  #top-bar h2 {
+    font-size: 16px; /* Chữ nhỏ lại xíu cho đỡ chật */
+  }
+  #search-box {
+    width: 90%; /* Ô tìm kiếm rộng hơn trên màn hình nhỏ */
+  }
+}
+
+/* --- Tối ưu cho Điện thoại (iPhone, Android) --- */
+@media (max-width: 480px) {
+  #top-bar {
+    padding: 8px 10px;
+  }
+  
+  /* Giấu đồng hồ trên điện thoại quá nhỏ nếu cần không gian, 
+     hoặc cho nó nhỏ lại */
+  #current-time {
+    font-size: 10px;
+    padding: 2px 5px;
+  }
+
+  #top-bar h2 {
+    font-size: 14px;
+  }
+
+  .product-img {
+    width: 80px; /* Ảnh nhỏ lại cho cân đối trên phone */
+    height: 80px;
+  }
+
+  .product div {
+    font-size: 12px; /* Tên sản phẩm nhỏ lại */
+  }
+
+  /* Giỏ hàng chiếm toàn bộ màn hình trên điện thoại */
+  #cart-overlay, #history-overlay {
+    width: 100%;
+  }
 }
