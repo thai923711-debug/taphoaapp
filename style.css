@@ -73,18 +73,20 @@ body {
   gap: 10px; /* ✅ Tạo khoảng cách nhỏ giữa Menu và Ngày giờ */
 }
 
-/* Thêm hoặc sửa đoạn này cho đồng hồ */
+/* Tìm và sửa lại đoạn #current-time */
 #current-time {
   color: #ffdd57;
-  font-size: 13px;
+  font-size: 15px; /* Tăng kích thước chữ một chút cho dễ nhìn */
   font-weight: bold;
-  line-height: 1.2;
-  white-space: nowrap; /* ✅ Không cho ngày giờ bị xuống dòng */
-  background: rgba(0, 0, 0, 0.2); /* Nền tối nhẹ cho nổi bật */
-  padding: 4px 8px;
-  border-radius: 5px;
+  text-align: center; /* Căn giữa dòng */
+  margin: 10px auto;  /* Tạo khoảng cách trên dưới 10px */
+  padding: 8px 15px;
+  background: rgba(44, 44, 62, 0.8); /* Nền tối để nổi bật màu vàng */
+  border-radius: 10px;
+  width: fit-content; /* Chiều rộng vừa khít nội dung */
+  display: block;    /* Đảm bảo nó chiếm 1 dòng riêng */
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
-
 /* Căn chỉnh lại tiêu đề H2 */
 #top-bar h2 {
   flex-grow: 1;    /* ✅ Thằng này sẽ chiếm hết khoảng trống để đẩy Giỏ hàng về bên phải */
@@ -643,9 +645,10 @@ body {
 
 /* --- Tối ưu cho Điện thoại (iPhone, Android) --- */
 @media (max-width: 480px) {
-  #top-bar {
-    padding: 8px 10px;
-  }
+ #top-bar {
+  justify-content: space-between; /* Đẩy Menu sang trái, Giỏ hàng sang phải */
+  padding: 10px 15px;
+}
   
   /* Giấu đồng hồ trên điện thoại quá nhỏ nếu cần không gian, 
      hoặc cho nó nhỏ lại */
@@ -655,7 +658,10 @@ body {
   }
 
   #top-bar h2 {
-    font-size: 14px;
+    flex-grow: 1;
+    text-align: center;
+    font-size: 18px;
+    margin: 0;
   }
 
   .product-img {
