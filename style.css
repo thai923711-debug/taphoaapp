@@ -309,8 +309,9 @@ body {
 /* Quantity buttons */
 .qty-col button {
   border: none;
-  padding: 4px 8px;
-  margin: 0 4px;
+  padding: 2px 8px;
+  font-size: 12px
+  margin: 0 2px;
   border-radius: 4px;
   cursor: pointer;
   font-weight: bold;
