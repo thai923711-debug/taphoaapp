@@ -44,7 +44,7 @@ const products = {
     "Băng vệ sinh Diana mỏng cánh", "Băng vệ sinh Kotex mỏng cánh", "Băng Vệ Sinh Diana Sensi",
     "Băng vệ sinh Kotex hằng ngày", "Băng vệ sinh Kotex ban đêm", "Kem đánh răng PS",
     "Giấy cuộn Vinaroll", "Giấy an an", "Xịt muỗi Số 9 Đỏ",
-    "Dầu xã Thái Dây Đen", "Dầu xã Thái Dây Trắng", "Dầu xã Comfort hương ban mai",
+    "Dầu xã Thái Dây Đen", "Dầu xã Comfort hương ban mai", "Dầu xã Thái Dây Trắng",
     "Dầu gội Rejoice", "Dầu gội Clear", "Dầu gội sunsilk đen", "Dầu gội XMEN",
     "Nước tẩy Con Vịt Duck", "Nước tẩy Vim"
   ],
