@@ -227,17 +227,15 @@ function updateSelectedList() {
   let tbody = document.getElementById("selected-list");
   tbody.innerHTML = "";
 
-  // Dùng .reverse() để đưa món mới thêm (nằm cuối object) lên đầu bảng
+  // Dùng .reverse() để đưa món mới thêm lên đầu bảng
   const entries = Object.entries(selectedProducts).reverse();
 
   entries.forEach(([name, qty]) => {
     let row = document.createElement("tr");
 
-    // Cột 1: Số lượng (SL) và Nút bấm +/-
+    // --- CỘT 1: SỐ LƯỢNG (Giữ nguyên logic của bạn) ---
     let qtyCell = document.createElement("td");
     qtyCell.style.textAlign = "center";
-
-    // Tạo container cho nút và số để căn chỉnh đẹp hơn
     let qtyContainer = document.createElement("div");
     qtyContainer.style.display = "flex";
     qtyContainer.style.flexDirection = "column";
@@ -252,37 +250,68 @@ function updateSelectedList() {
 
     let btnGroup = document.createElement("div");
     btnGroup.classList.add("qty-col");
-
     let minusBtn = document.createElement("button");
     minusBtn.textContent = "-";
     minusBtn.onclick = (e) => { e.stopPropagation(); changeQty(name, -1); };
-
     let plusBtn = document.createElement("button");
     plusBtn.textContent = "+";
     plusBtn.onclick = (e) => { e.stopPropagation(); changeQty(name, 1); };
 
     btnGroup.appendChild(minusBtn);
     btnGroup.appendChild(plusBtn);
-
     qtyContainer.appendChild(qtyValue);
     qtyContainer.appendChild(btnGroup);
     qtyCell.appendChild(qtyContainer);
     row.appendChild(qtyCell);
 
-    // Cột 2: Tên Sản phẩm
+    // --- CỘT 2: TÊN SẢN PHẨM + HÌNH ẢNH (Phần thêm mới) ---
     let nameCell = document.createElement("td");
-    nameCell.textContent = name;
-    nameCell.style.textAlign = "left"; // Tên sản phẩm canh lề trái cho dễ đọc
+    nameCell.style.textAlign = "left";
     nameCell.style.paddingLeft = "10px";
+
+    // Tạo container flex để ảnh và chữ nằm cùng hàng
+    let contentWrapper = document.createElement("div");
+    contentWrapper.style.display = "flex";
+    contentWrapper.style.alignItems = "center";
+    contentWrapper.style.gap = "10px";
+
+    // Tìm danh mục để lấy ảnh
+    let categoryFound = "Khác";
+    for (let [cat, items] of Object.entries(products)) {
+      if (items.includes(name)) {
+        categoryFound = cat;
+        break;
+      }
+    }
+
+    let img = document.createElement("img");
+    let imgFileName = toFileName(name);
+    img.src = `./images/${categoryFound}/${imgFileName}.jpg`;
+    img.style.width = "40px";
+    img.style.height = "40px";
+    img.style.objectFit = "contain";
+    img.style.borderRadius = "4px";
+    img.style.background = "#3a3a4d";
+    img.onerror = () => { img.style.display = "none"; };
+
+    let textNode = document.createElement("span");
+    textNode.textContent = name;
+    textNode.style.color = "white"; // Chuyển màu chữ sang trắng
+
+    contentWrapper.appendChild(img);
+    contentWrapper.appendChild(textNode);
+
+    nameCell.appendChild(contentWrapper);
     nameCell.onclick = () => editProductName(nameCell, name);
     row.appendChild(nameCell);
 
-    // Cột 3: Nút Xóa (X)
+    // --- CỘT 3: NÚT XÓA (Giữ nguyên logic của bạn) ---
     let removeCell = document.createElement("td");
     let removeBtn = document.createElement("span");
     removeBtn.textContent = "X";
     removeBtn.style.color = "#e74c3c";
     removeBtn.style.fontSize = "18px";
+    removeBtn.style.cursor = "pointer";
     removeBtn.onclick = () => removeProduct(name);
     removeCell.appendChild(removeBtn);
     row.appendChild(removeCell);
@@ -290,7 +319,7 @@ function updateSelectedList() {
     tbody.appendChild(row);
   });
 
-  updateCartIcon();
+  updateCartIcon(); //
 }
 
 function editProductName(cell, oldName) {
