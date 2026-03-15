@@ -227,54 +227,62 @@ function updateSelectedList() {
   let tbody = document.getElementById("selected-list");
   tbody.innerHTML = "";
 
-  Object.entries(selectedProducts).forEach(([name, qty]) => {
+  // Dùng .reverse() để đưa món mới thêm (nằm cuối object) lên đầu bảng
+  const entries = Object.entries(selectedProducts).reverse();
+
+  entries.forEach(([name, qty]) => {
     let row = document.createElement("tr");
 
-    let nameCell = document.createElement("td");
-    nameCell.textContent = name;
-    nameCell.style.cursor = "pointer";
-    nameCell.onclick = () => editProductName(nameCell, name);
-    row.appendChild(nameCell);
-
+    // Cột 1: Số lượng (SL) và Nút bấm +/-
     let qtyCell = document.createElement("td");
-    qtyCell.textContent = qty;
-    qtyCell.classList.add("qty-cell");
-    qtyCell.style.cursor = "pointer";
-    qtyCell.onclick = () => editProductQty(qtyCell, name, qty);
-    row.appendChild(qtyCell);
+    qtyCell.style.textAlign = "center";
 
-    let qtyButtons = document.createElement("td");
-    qtyButtons.classList.add("qty-col");
+    // Tạo container cho nút và số để căn chỉnh đẹp hơn
+    let qtyContainer = document.createElement("div");
+    qtyContainer.style.display = "flex";
+    qtyContainer.style.flexDirection = "column";
+    qtyContainer.style.alignItems = "center";
+    qtyContainer.style.gap = "5px";
+
+    let qtyValue = document.createElement("div");
+    qtyValue.textContent = qty;
+    qtyValue.style.fontWeight = "bold";
+    qtyValue.style.cursor = "pointer";
+    qtyValue.onclick = () => editProductQty(qtyValue, name, qty);
+
+    let btnGroup = document.createElement("div");
+    btnGroup.classList.add("qty-col");
 
     let minusBtn = document.createElement("button");
     minusBtn.textContent = "-";
-    minusBtn.type = "button"; // tránh form reload
-    minusBtn.classList.add("qty-btn");
-    minusBtn.addEventListener("click", function (e) {
-      e.preventDefault();
-      e.stopPropagation();
-      setTimeout(() => changeQty(name, -1), 10);
-    });
+    minusBtn.onclick = (e) => { e.stopPropagation(); changeQty(name, -1); };
 
     let plusBtn = document.createElement("button");
     plusBtn.textContent = "+";
-    plusBtn.type = "button";
-    plusBtn.classList.add("qty-btn");
-    plusBtn.addEventListener("click", function (e) {
-      e.preventDefault();
-      e.stopPropagation();
-      setTimeout(() => changeQty(name, 1), 10);
-    });
+    plusBtn.onclick = (e) => { e.stopPropagation(); changeQty(name, 1); };
 
+    btnGroup.appendChild(minusBtn);
+    btnGroup.appendChild(plusBtn);
 
+    qtyContainer.appendChild(qtyValue);
+    qtyContainer.appendChild(btnGroup);
+    qtyCell.appendChild(qtyContainer);
+    row.appendChild(qtyCell);
 
-    qtyButtons.appendChild(minusBtn);
-    qtyButtons.appendChild(plusBtn);
-    row.appendChild(qtyButtons);
+    // Cột 2: Tên Sản phẩm
+    let nameCell = document.createElement("td");
+    nameCell.textContent = name;
+    nameCell.style.textAlign = "left"; // Tên sản phẩm canh lề trái cho dễ đọc
+    nameCell.style.paddingLeft = "10px";
+    nameCell.onclick = () => editProductName(nameCell, name);
+    row.appendChild(nameCell);
 
+    // Cột 3: Nút Xóa (X)
     let removeCell = document.createElement("td");
     let removeBtn = document.createElement("span");
     removeBtn.textContent = "X";
+    removeBtn.style.color = "#e74c3c";
+    removeBtn.style.fontSize = "18px";
     removeBtn.onclick = () => removeProduct(name);
     removeCell.appendChild(removeBtn);
     row.appendChild(removeCell);
