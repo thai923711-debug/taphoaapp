@@ -225,15 +225,15 @@ function toggleProduct(name) {
 
 function updateSelectedList() {
   let tbody = document.getElementById("selected-list");
+  if (!tbody) return;
   tbody.innerHTML = "";
 
-  // Dùng .reverse() để đưa món mới thêm lên đầu bảng
   const entries = Object.entries(selectedProducts).reverse();
 
   entries.forEach(([name, qty]) => {
     let row = document.createElement("tr");
 
-    // --- CỘT 1: SỐ LƯỢNG (Giữ nguyên logic của bạn) ---
+    // --- CỘT 1: SỐ LƯỢNG ---
     let qtyCell = document.createElement("td");
     qtyCell.style.textAlign = "center";
     let qtyContainer = document.createElement("div");
@@ -245,7 +245,6 @@ function updateSelectedList() {
     let qtyValue = document.createElement("div");
     qtyValue.textContent = qty;
     qtyValue.style.fontWeight = "bold";
-    qtyValue.style.cursor = "pointer";
     qtyValue.onclick = () => editProductQty(qtyValue, name, qty);
 
     let btnGroup = document.createElement("div");
@@ -264,18 +263,17 @@ function updateSelectedList() {
     qtyCell.appendChild(qtyContainer);
     row.appendChild(qtyCell);
 
-    // --- CỘT 2: TÊN SẢN PHẨM + HÌNH ẢNH (Phần thêm mới) ---
+    // --- CỘT 2: TÊN SẢN PHẨM (Bấm vào để phóng to ảnh) ---
     let nameCell = document.createElement("td");
     nameCell.style.textAlign = "left";
     nameCell.style.paddingLeft = "10px";
 
-    // Tạo container flex để ảnh và chữ nằm cùng hàng
     let contentWrapper = document.createElement("div");
     contentWrapper.style.display = "flex";
     contentWrapper.style.alignItems = "center";
     contentWrapper.style.gap = "10px";
 
-    // Tìm danh mục để lấy ảnh
+    // Tìm category để lấy đường dẫn ảnh
     let categoryFound = "Khác";
     for (let [cat, items] of Object.entries(products)) {
       if (items.includes(name)) {
@@ -283,34 +281,41 @@ function updateSelectedList() {
         break;
       }
     }
+    const imgPath = `./images/${categoryFound}/${toFileName(name)}.jpg`;
 
     let img = document.createElement("img");
-    let imgFileName = toFileName(name);
-    img.src = `./images/${categoryFound}/${imgFileName}.jpg`;
+    img.src = imgPath;
+    img.className = "cart-thumb"; // Sử dụng class của bạn
     img.style.width = "40px";
     img.style.height = "40px";
     img.style.objectFit = "contain";
-    img.style.borderRadius = "4px";
-    img.style.background = "#3a3a4d";
+    img.style.cursor = "zoom-in";
     img.onerror = () => { img.style.display = "none"; };
 
     let textNode = document.createElement("span");
     textNode.textContent = name;
-    textNode.style.color = "white"; // Chuyển màu chữ sang trắng
+    textNode.style.color = "white";
+    textNode.style.cursor = "zoom-in";
 
     contentWrapper.appendChild(img);
     contentWrapper.appendChild(textNode);
-
     nameCell.appendChild(contentWrapper);
-    nameCell.onclick = () => editProductName(nameCell, name);
+
+    // HÀM PHÓNG TO ẢNH KHI CLICK VÀO TÊN HOẶC ẢNH
+    nameCell.onclick = () => {
+        const overlay = document.getElementById("image-zoom-overlay");
+        const zoomedImg = document.getElementById("zoomed-image");
+        zoomedImg.src = imgPath;
+        overlay.style.display = "flex";
+    };
+
     row.appendChild(nameCell);
 
-    // --- CỘT 3: NÚT XÓA (Giữ nguyên logic của bạn) ---
+    // --- CỘT 3: NÚT XÓA ---
     let removeCell = document.createElement("td");
     let removeBtn = document.createElement("span");
     removeBtn.textContent = "X";
     removeBtn.style.color = "#e74c3c";
-    removeBtn.style.fontSize = "18px";
     removeBtn.style.cursor = "pointer";
     removeBtn.onclick = () => removeProduct(name);
     removeCell.appendChild(removeBtn);
@@ -319,7 +324,7 @@ function updateSelectedList() {
     tbody.appendChild(row);
   });
 
-  updateCartIcon(); //
+  updateCartIcon();
 }
 
 function editProductName(cell, oldName) {
@@ -347,18 +352,26 @@ function editProductName(cell, oldName) {
 
 function saveEditedName(cell, oldName, newName) {
   newName = newName.trim();
-  if (!newName) newName = oldName;
-  selectedProducts[newName] = selectedProducts[oldName];
-  if (newName !== oldName) {
-    delete selectedProducts[oldName];
+  // Nếu tên trống hoặc không đổi thì hiện lại như cũ
+  if (!newName || newName === oldName) {
+    updateSelectedList();
+    return;
   }
-  addHistory("đổi tên", newName, selectedProducts[newName]);
+
+  // 1. Gán số lượng sang tên mới
+  selectedProducts[newName] = selectedProducts[oldName];
+
+  // 2. Xóa bỏ tên cũ (Bắt buộc để không bị lỗi undefined khi copy)
+  delete selectedProducts[oldName];
+
+  addHistory("đổi tên", `${oldName} -> ${newName}`, selectedProducts[newName]);
+
+  // 3. Cập nhật giao diện
   updateSelectedList();
   renderProducts();
   saveCart();
   updateCartIcon();
 }
-
 function editProductQty(cell, name, oldQty) {
   let input = document.createElement("input");
   input.type = "number";
@@ -472,10 +485,20 @@ function removeProduct(name) {
 }
 
 function copyList() {
-  let text = Object.entries(selectedProducts).map(([name, qty]) => `${name} (${qty})`).join("\n");
-  navigator.clipboard.writeText(text).then(() => showToast("Đã sao chép!"));
-}
+    let text = Object.entries(selectedProducts)
+        .filter(([name, qty]) => name !== "undefined" && name !== "")
+        .map(([name, qty]) => `${name} (${qty})`)
+        .join("\n");
 
+    if (!text) {
+        showToast("Giỏ hàng trống!");
+        return;
+    }
+
+    navigator.clipboard.writeText(text).then(() => {
+        showToast("Đã sao chép danh sách!");
+    });
+}
 function showToast(message) {
   let toast = document.getElementById("toast");
   toast.textContent = message;
