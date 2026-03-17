@@ -62,12 +62,20 @@ function toggleHistory() {
   }
 }
 
-// ✅ Xóa lịch sử
+// ✅ Xóa lịch sử (Dùng bảng Confirm đồng bộ)
 function clearHistory() {
-  if (!confirm("Bạn có chắc muốn xóa toàn bộ lịch sử không?")) return;
-  historyLog = [];
-  renderHistory();
-  showToast("Đã xóa toàn bộ lịch sử!");
+  if (historyLog.length === 0) {
+    showToast("Lịch sử đang trống!");
+    return;
+  }
+
+  showConfirm("Bạn có chắc chắn muốn <strong>XÓA SẠCH</strong> toàn bộ lịch sử không?", (ok) => {
+    if (ok) {
+      historyLog = [];
+      renderHistory();
+      showToast("Đã xóa sạch lịch sử!");
+    }
+  });
 }
 
 // ====== Hiển thị sản phẩm ======
@@ -561,6 +569,7 @@ window.onload = function () {
 
   loadCart();
   updateSelectedList();
+  loadCheckingList();
   renderCategories();
   renderProducts();
 };
@@ -583,6 +592,39 @@ document.addEventListener("DOMContentLoaded", function() {
     }
   });
 });
+
+// 2. Hàm lưu vào máy
+function saveCheckingList() {
+    localStorage.setItem("checkingList", JSON.stringify(checkingList));
+}
+
+// 3. Hàm lấy dữ liệu ra
+function loadCheckingList() {
+    let data = localStorage.getItem("checkingList");
+    if (data) {
+        checkingList = JSON.parse(data);
+        renderChecking();
+    }
+}
+
+// 4. Cập nhật hàm render để tự động lưu mỗi khi có thay đổi
+function renderChecking() {
+    const container = document.getElementById("note-items-container");
+    if (!container) return;
+
+    saveNoteData(); // Gọi hàm lưu dữ liệu
+
+    container.innerHTML = checkingList.map((item, i) => {
+        const imgSrc = getProductImgByName(item);
+        return `
+            <div class="check-item" id="check-item-${i}">
+                <img src="${imgSrc}" class="check-thumb" onerror="this.src='./images/default.jpg'">
+                <span style="flex:1; color:white; font-size:14px;">${item}</span>
+                <button class="btn-done" onclick="checkDone(${i})">Xong ✅</button>
+            </div>
+        `;
+    }).join("");
+}
 
 // Hàm xóa toàn bộ sản phẩm
 function clearAllCart() {
@@ -636,3 +678,198 @@ function updateClock() {
 // Chạy đồng hồ ngay khi load trang
 setInterval(updateClock, 1000);
 updateClock();
+
+
+// --- LOGIC GHI CHÚ & KIỂM HÀNG ---
+let checkingList = [];
+let trashList = [];
+
+function toggleNote() {
+    const el = document.getElementById("note-overlay");
+    el.style.display = (el.style.display === "flex") ? "none" : "flex";
+}
+
+function toggleTrash() {
+    const el = document.getElementById("trash-overlay");
+    el.style.display = (el.style.display === "flex") ? "none" : "flex";
+}
+
+// Hàm tìm đúng đường dẫn ảnh dựa trên tên sản phẩm
+function getProductImgByName(itemName) {
+    // 1. Tách tên (bỏ phần số lượng trong ngoặc)
+    let pureName = itemName.split('(')[0].trim();
+
+    // 2. Tìm danh mục của sản phẩm này
+    let categoryFound = "Khác";
+    if (typeof products !== 'undefined') {
+        for (let [cat, items] of Object.entries(products)) {
+            if (items.includes(pureName)) {
+                categoryFound = cat;
+                break;
+            }
+        }
+    }
+
+    // 3. Trả về đường dẫn chuẩn
+    return `./images/${categoryFound}/${toFileName(pureName)}.jpg`;
+}
+
+function processNote() {
+    const text = document.getElementById("note-input").value;
+    if (!text.trim()) return;
+
+    checkingList = text.split('\n').map(s => s.trim()).filter(s => s !== "");
+    document.getElementById("note-input").value = "";
+    renderChecking();
+}
+
+function renderChecking() {
+    const container = document.getElementById("note-items-container");
+    container.innerHTML = checkingList.map((item, i) => {
+        const imgSrc = getProductImgByName(item);
+        return `
+            <div class="check-item" id="check-item-${i}">
+                <img src="${imgSrc}" class="check-thumb" onerror="this.src='./images/default.jpg'; this.style.display='block';">
+                <span>${item}</span>
+                <button class="btn-done" onclick="checkDone(${i})">Xong ✅</button>
+            </div>
+        `;
+    }).join("");
+}
+
+function checkDone(index) {
+    const element = document.getElementById(`check-item-${index}`);
+    if (!element) return;
+
+    // Chạy hiệu ứng CSS
+    element.classList.add('fade-out-right');
+
+    // Chờ hiệu ứng (0.4s) rồi mới xóa dữ liệu
+    setTimeout(() => {
+        const item = checkingList.splice(index, 1)[0];
+        trashList.unshift(item);
+
+        renderChecking();
+        renderTrash();
+
+        const trashCountEl = document.getElementById("trash-count");
+        if (trashCountEl) trashCountEl.textContent = trashList.length;
+    }, 400);
+}
+
+function renderTrash() {
+    const container = document.getElementById("trash-items-container");
+    if (!container) return;
+
+    saveNoteData();
+
+    container.innerHTML = trashList.map((item, i) => {
+        const imgSrc = getProductImgByName(item);
+        return `
+            <div class="check-item" style="display: flex; align-items: center; height: 60px; overflow: hidden; padding: 5px 10px; margin-bottom: 8px; background: #2c2c3e; border-radius: 8px; opacity: 0.7;">
+                <img src="${imgSrc}" class="check-thumb" onerror="this.src='./images/default.jpg';" style="width: 45px; height: 45px; object-fit: contain; flex-shrink: 0;">
+                <span style="flex: 1; color: #bdc3c7; font-size: 14px; margin-left: 10px; text-decoration: line-through; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item}</span>
+            </div>
+        `;
+    }).join("");
+
+    const countEl = document.getElementById("trash-count");
+    if (countEl) countEl.textContent = trashList.length;
+}
+
+function clearAllTrash() {
+    if (trashList.length === 0) {
+        showToast("Thùng rác đang trống!");
+        return;
+    }
+
+    // Gọi hàm showConfirm có sẵn trong code của bạn để hiện bảng thông báo tối
+    showConfirm(
+        "Bạn có chắc chắn muốn <strong>DỌN SẠCH</strong> thùng rác không?",
+        (ok) => {
+            if (ok) {
+                trashList = [];
+                renderTrash();
+                saveNoteData();
+                showToast("Đã dọn sạch thùng rác!");
+            }
+        }
+    );
+}
+
+// Hàm xóa sạch danh sách kiểm hàng
+function clearAllNote() {
+    if (checkingList.length === 0) {
+        showToast("Danh sách đang trống!");
+        return;
+    }
+
+    showConfirm(
+        "Bạn có chắc muốn <strong>XÓA SẠCH</strong> danh sách kiểm hàng này không?",
+        (ok) => {
+            if (ok) {
+                checkingList = []; // Xóa trắng mảng
+                renderChecking();  // Vẽ lại giao diện
+                showToast("Đã xóa sạch danh sách!");
+            }
+        }
+    );
+}
+
+// 1. Hàm lưu vào localStorage
+function saveNoteData() {
+    localStorage.setItem("checkingList", JSON.stringify(checkingList));
+    localStorage.setItem("trashList", JSON.stringify(trashList));
+}
+
+function loadNoteData() {
+    const savedChecking = localStorage.getItem("checkingList");
+    const savedTrash = localStorage.getItem("trashList");
+
+    if (savedChecking) checkingList = JSON.parse(savedChecking);
+    if (savedTrash) trashList = JSON.parse(savedTrash);
+
+    renderChecking();
+    renderTrash();
+}
+
+// 3. Hàm render danh sách kiểm hàng (Gắn class .check-thumb)
+function renderChecking() {
+    const container = document.getElementById("note-items-container");
+    if (!container) return;
+
+    saveNoteData();
+
+    container.innerHTML = checkingList.map((item, i) => {
+        const imgSrc = getProductImgByName(item);
+        return `
+            <div class="check-item" id="check-item-${i}" style="display: flex; align-items: center; height: 60px; overflow: hidden; padding: 5px 10px; margin-bottom: 8px; background: #3a3a4d; border-radius: 8px;">
+                <img src="${imgSrc}" class="check-thumb" onerror="this.src='./images/default.jpg';" style="width: 45px; height: 45px; object-fit: contain; flex-shrink: 0;">
+                <span style="flex: 1; color: white; font-size: 14px; margin-left: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item}</span>
+                <button class="btn-done" onclick="checkDone(${i})" style="margin-left: auto; flex-shrink: 0;">Xong ✅</button>
+            </div>
+        `;
+    }).join("");
+}
+
+// 4. Hàm xử lý khi bấm Xong (Có hiệu ứng và lưu trữ)
+function checkDone(index) {
+    const element = document.getElementById(`check-item-${index}`);
+    if (!element) return;
+
+    element.classList.add('fade-out-right'); // Chạy hiệu ứng biến mất
+
+    setTimeout(() => {
+        const item = checkingList.splice(index, 1)[0];
+        trashList.unshift(item);
+
+        renderChecking();
+        renderTrash();
+
+        const trashCountEl = document.getElementById("trash-count");
+        if (trashCountEl) trashCountEl.textContent = trashList.length;
+    }, 400);
+}
+
+// Thêm lệnh này vào cuối file app.js để tự động load khi mở web
+loadNoteData();
