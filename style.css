@@ -756,3 +756,108 @@ body {
   box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
   transition: transform 0.3s ease;
 }
+
+/* Class dùng chung cho các Overlay */
+.overlay-common {
+    position: fixed;
+    top: 0; right: 0;
+    width: 100%; height: 100%;
+    background: #2c2c3e;
+    display: none;
+    flex-direction: column;
+    z-index: 4000;
+}
+
+.overlay-header {
+    padding: 15px;
+    background: #2c2c3e;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #3498db;
+}
+
+/* Item trong danh sách kiểm hàng */
+.check-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: #3a3a4d;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    border-left: 4px solid #3498db;
+}
+
+.check-item.in-trash {
+    border-left-color: #e74c3c;
+    opacity: 0.7;
+}
+
+.btn-check {
+    background: #27ae60;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-done {
+    background: #27ae60;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+}
+3. Fil
+
+/* Hình ảnh nhỏ trong ghi chú */
+.check-thumb {
+    width: 45px !important;
+    height: 45px !important;
+    object-fit: contain !important;
+    flex-shrink: 0 !important; /* Quan trọng: Không cho khung bóp nát ảnh hoặc ảnh đẩy khung */
+}
+
+/* Hiệu ứng trượt sang phải và mờ dần */
+.fade-out-right {
+    animation: fadeOutRight 0.4s ease forwards;
+}
+
+@keyframes fadeOutRight {
+    0% { opacity: 1; transform: translateX(0); }
+    100% { opacity: 0; transform: translateX(50px); }
+}
+
+/* Chỉnh lại layout item cho đẹp */
+.check-item {
+    display: flex;
+    align-items: center;
+    background: #3a3a4d;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    height: 60px; /* Khóa chiều cao khung này lại */
+    overflow: hidden; /* Ảnh to quá cũng không bung ra ngoài được */
+    padding: 0 15px;
+    transition: all 0.3s ease;
+}
+
+.check-item span {
+    flex: 1;
+    font-size: 14px;
+    color: white;
+}
+
+.btn-done {
+    background: #27ae60;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-left: 10px;
+}
