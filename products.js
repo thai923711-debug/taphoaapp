@@ -19,7 +19,7 @@ const products = {
     "Sữa Vinamilk không đường bịch", "Sữa Vinamilk có đường bịch", "Sữa đậu nành Fami bịch",
     "Sữa Milo hộp 180ml", "Sữa Milo hộp 110ml", "Sữa con bò 100% 110ml",
     "Sữa con bò 100% 180ml", "Sữa Su Su", "Cafe Sài Gòn", "Cafe Trần Quang",
-    "Cafe Vinacafe", "Cafe Phố", "Yến sào có đường", "Yến sào không đường", "Sữa ngôi sao giấy lớn", "Sữa ngôi sao giấy nhỏ"
+    "Cafe Vinacafe", "Cafe Phố hộp", "Yến sào có đường", "Yến sào không đường", "Sữa ngôi sao giấy lớn", "Sữa ngôi sao giấy nhỏ"
   ],
   "Nước ngọt & bia": [
     "Nước ngọt Coca 500ml Lon", "Nước ngọt Coca 1Lít5", "Nước ngọt Pepsi 500ml",
