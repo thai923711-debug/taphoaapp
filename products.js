@@ -40,7 +40,7 @@ const products = {
     "Xịt muỗi Kingstar", "Xịt muỗi Jumbo Vape", "Xịt muỗi Jumbo không mùi",
     "Nhang muỗi Jumbo ít khói", "Nhang muỗi Jumbo", "Nhang muỗi Thái",
     "Xà bông OMO bịch 400g", "Xà bông OMO bịch 800g", "Xà bông Aba bịch 400g", "Xà bông Aba bịch 800g",
-    "Xà bông OMO bịch 3kg", "Xà bông bịch Aba 3kg", "Omo Nước 1kg8" , "Omo Nước 2k9",
+    "Xà bông OMO bịch 3kg", "Xà bông bịch Aba 3kg", "Omo Nước 1kg8" , "Omo Nước 2kg9",
     "Băng vệ sinh Diana mỏng cánh", "Băng vệ sinh Kotex mỏng cánh", "Băng Vệ Sinh Diana Sensi",
     "Băng vệ sinh Kotex hằng ngày", "Băng vệ sinh Kotex ban đêm", "Kem đánh răng PS",
     "Giấy cuộn Vinaroll", "Giấy an an", "Xịt muỗi Số 9 Đỏ",
