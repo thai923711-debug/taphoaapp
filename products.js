@@ -56,7 +56,7 @@ const products = {
     "Thuốc lá khánh hội", "Thuốc lá hòa bình hộp", "Thuốc lá 3 số 555",
     "Dầu ăn An Long 1 Lít", "Dầu ăn An Long 2 Lít", "Dầu ăn An Long 5 Lít",
     "Dầu ăn Tường An 1 Lít", "Dầu ăn Tường An 2 Lít", "Dầu ăn Tường An 5 Lít",
-    "Dầu ăn Happi Koki 400g",
+    "Dầu ăn Happi Koki 400g", "Pin Maxell Đỏ", "Pin Maxell Đen",
     "Bún khô", "Bánh tráng Tân Nhiên"
   ]
 };
