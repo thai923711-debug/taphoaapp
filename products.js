@@ -46,7 +46,7 @@ const products = {
     "Giấy cuộn Vinaroll", "Giấy an an", "Xịt muỗi Số 9 Đỏ",
     "Dầu xã Thái Dây Đen", "Dầu xã Comfort hương ban mai", "Dầu xã Thái Dây Trắng",
     "Dầu gội Rejoice", "Dầu gội Clear", "Dầu gội sunsilk đen", "Dầu gội XMEN",
-    "Nước tẩy Con Vịt Duck", "Nước tẩy Vim"
+    "Nước tẩy Con Vịt Duck", "Nước tẩy Vim", "Khăn Giấy Ướt Baby"
   ],
   "Khác": [
     "Bộ bài tiến lên", "Ống quẹt khò", "Ống quẹt bấm", "Ống quẹt đá",
