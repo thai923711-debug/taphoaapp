@@ -449,11 +449,11 @@ function showConfirm(message, callback) {
   noBtn.addEventListener("click", onNo);
 }
 
-// ✅ Cập nhật số lượng trực tiếp (chỉ hỏi khi giảm về 0 để xóa món)
+// ✅ Cập nhật số lượng trực tiếp + Có thông báo Toast
 function changeQty(name, delta) {
   if (!selectedProducts[name]) return;
 
-  // Nếu bấm dấu trừ khi số lượng đang là 1 -> Hỏi xác nhận trước khi xóa hẳn
+  // Nếu số lượng là 1 mà bấm trừ -> Hỏi xác nhận trước khi xóa hẳn
   if (delta < 0 && selectedProducts[name] === 1) {
     showConfirm(
       `Bạn có chắc muốn <strong>XÓA</strong> sản phẩm "<strong>${name}</strong>" khỏi giỏ hàng?`,
@@ -465,20 +465,25 @@ function changeQty(name, delta) {
         renderProducts();
         saveCart();
         updateCartIcon();
+        showToast(`Đã xóa "${name}" khỏi giỏ hàng`);
       }
     );
     return;
   }
 
-  // Tăng hoặc giảm thông thường (không hiện bảng hỏi)
+  // Tăng hoặc giảm thông thường
   selectedProducts[name] += delta;
+  const actionText = delta > 0 ? "Tăng" : "Giảm";
   addHistory(delta > 0 ? "tăng" : "giảm", name, selectedProducts[name]);
 
-  // Cập nhật giao diện ngay lập tức
+  // Cập nhật giao diện
   updateSelectedList();
   renderProducts();
   saveCart();
   updateCartIcon();
+
+  // Hiện thông báo nổi phía dưới màn hình
+  showToast(`${actionText} "${name}" lên ${selectedProducts[name]}`);
 }
 
 
