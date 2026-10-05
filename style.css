@@ -379,21 +379,21 @@ body {
 }
 #copyBtn:hover { background: #e67e22; color: #fff; transform: scale(1.05); }
 
-/* Toast thông báo - To rõ, căn giữa chuẩn, tự thụt cách mép đáy an toàn */
+/* Toast thông báo - Bản to rõ, nổi bật */
 #toast {
   position: fixed;
   left: 50%;
-  bottom: calc(30px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(40px + env(safe-area-inset-bottom, 0px));
   transform: translateX(-50%) translateY(20px);
-  background: rgba(30, 41, 59, 0.95);
-  border: 1px solid #ff9800;
-  color: #ffdd57;
-  font-size: 16px;
+  background: #1e293b;
+  border: 2px solid #ff9800; /* Viền cam đậm hơn */
+  color: #ffdd57;            /* Chữ vàng sáng */
+  font-size: 19px;           /* 🔥 Tăng cỡ chữ to rõ (trước là 16px) */
   font-weight: bold;
   text-align: center;
-  padding: 14px 24px;
-  border-radius: 30px;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+  padding: 16px 32px;        /* 🔥 Khung dày và rộng rãi hơn */
+  border-radius: 40px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
   z-index: 99999;
   opacity: 0;
   visibility: hidden;
