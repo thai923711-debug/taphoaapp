@@ -449,33 +449,36 @@ function showConfirm(message, callback) {
   noBtn.addEventListener("click", onNo);
 }
 
-// ✅ Cập nhật số lượng (hiện hộp xác nhận + cập nhật đúng)
+// ✅ Cập nhật số lượng trực tiếp (chỉ hỏi khi giảm về 0 để xóa món)
 function changeQty(name, delta) {
-  const actionText = delta > 0 ? "TĂNG" : "GIẢM";
+  if (!selectedProducts[name]) return;
 
-  showConfirm(
-    `Bạn có chắc muốn <strong>${actionText}</strong> số lượng của "<strong>${name}</strong>" không?`,
-    (ok) => {
-      if (!ok) return;
-
-      if (selectedProducts[name]) {
-        selectedProducts[name] += delta;
-
-        if (selectedProducts[name] <= 0) {
-          addHistory("xóa", name, 0);
-          delete selectedProducts[name];
-        } else {
-          addHistory(delta > 0 ? "tăng" : "giảm", name, selectedProducts[name]);
-        }
+  // Nếu bấm dấu trừ khi số lượng đang là 1 -> Hỏi xác nhận trước khi xóa hẳn
+  if (delta < 0 && selectedProducts[name] === 1) {
+    showConfirm(
+      `Bạn có chắc muốn <strong>XÓA</strong> sản phẩm "<strong>${name}</strong>" khỏi giỏ hàng?`,
+      (ok) => {
+        if (!ok) return;
+        delete selectedProducts[name];
+        addHistory("xóa", name, 0);
+        updateSelectedList();
+        renderProducts();
+        saveCart();
+        updateCartIcon();
       }
+    );
+    return;
+  }
 
-      // ✅ Cập nhật lại toàn bộ giao diện
-      updateSelectedList();
-      renderProducts();
-      saveCart();
-      updateCartIcon();
-    }
-  );
+  // Tăng hoặc giảm thông thường (không hiện bảng hỏi)
+  selectedProducts[name] += delta;
+  addHistory(delta > 0 ? "tăng" : "giảm", name, selectedProducts[name]);
+
+  // Cập nhật giao diện ngay lập tức
+  updateSelectedList();
+  renderProducts();
+  saveCart();
+  updateCartIcon();
 }
 
 
