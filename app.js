@@ -185,6 +185,17 @@ function renderCategories() {
   categoryList.appendChild(historyItem);
 }
 
+// 4. Thêm nút Cập nhật ứng dụng (Xóa cache)
+  let updateItem = document.createElement("li");
+  updateItem.textContent = "🔄 Cập nhật bản mới";
+  updateItem.style.marginTop = "10px";
+  updateItem.style.background = "#27ae60"; // Màu xanh lá nổi bật
+  updateItem.style.color = "#fff";
+  updateItem.onclick = () => {
+    forceUpdateApp();
+  };
+  categoryList.appendChild(updateItem);
+
 // ====== Quản lý giỏ hàng ======
 function toggleProduct(name) {
   const event = window.event;
@@ -895,3 +906,25 @@ function checkDone(index) {
 
 // Thêm lệnh này vào cuối file app.js để tự động load khi mở web
 loadNoteData();
+
+// Hàm xóa cache và ép tải code mới từ GitHub
+function forceUpdateApp() {
+  showConfirm("Cập nhật lại giao diện và mã nguồn mới nhất từ máy chủ?", (ok) => {
+    if (!ok) return;
+
+    // Xóa bộ nhớ cache Service Worker (nếu có)
+    if ('caches' in window) {
+      caches.keys().then(names => {
+        names.forEach(name => caches.delete(name));
+      });
+    }
+
+    showToast("Đang tải code mới...");
+
+    // Thêm chuỗi thời gian ngẫu nhiên vào URL để ép trình duyệt không lấy file cũ
+    setTimeout(() => {
+      const cleanUrl = window.location.origin + window.location.pathname;
+      window.location.href = cleanUrl + '?v=' + new Date().getTime();
+    }, 500);
+  });
+}
