@@ -515,11 +515,25 @@ function copyList() {
         showToast("Đã sao chép danh sách!");
     });
 }
+let toastTimer = null;
 function showToast(message) {
   let toast = document.getElementById("toast");
+  if (!toast) return;
+
+  // Xóa bộ đếm cũ nếu đang bấm liên tục
+  if (toastTimer) clearTimeout(toastTimer);
+
   toast.textContent = message;
-  toast.className = "show";
-  setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+  toast.classList.remove("show");
+
+  // Kích hoạt lại animation mượt mà
+  void toast.offsetWidth; 
+  toast.classList.add("show");
+
+  // Giữ thông báo hiển thị trong 2 giây rồi mới tắt
+  toastTimer = setTimeout(() => {
+    toast.classList.remove("show");
+  }, 2000);
 }
 
 function toggleCart() {
