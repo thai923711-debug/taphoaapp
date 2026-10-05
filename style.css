@@ -379,38 +379,34 @@ body {
 }
 #copyBtn:hover { background: #e67e22; color: #fff; transform: scale(1.05); }
 
-/* Toast thông báo */
+/* Toast thông báo - To rõ, căn giữa chuẩn, tự thụt cách mép đáy an toàn */
 #toast {
-  visibility: hidden;
-  min-width: 200px;
-  margin-left: -100px;
-  background: red;      /* ✅ Nền đỏ */
-  color: white;         /* ✅ Chữ trắng */
-  font-weight: bold;    /* ✅ Chữ đậm cho nổi bật */
-  text-align: center;
-  border-radius: 6px;
-  padding: 10px;
   position: fixed;
   left: 50%;
-  bottom: 30px;
-  z-index: 4000;
-  font-size: 14px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3); /* ✅ thêm bóng cho rõ hơn */
+  bottom: calc(30px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%) translateY(20px);
+  background: rgba(30, 41, 59, 0.95);
+  border: 1px solid #ff9800;
+  color: #ffdd57;
+  font-size: 16px;
+  font-weight: bold;
+  text-align: center;
+  padding: 14px 24px;
+  border-radius: 30px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+  z-index: 99999;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  max-width: 90%;
+  white-space: normal;
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
 }
-
 
 #toast.show {
   visibility: visible;
-  animation: fadein 0.5s, fadeout 0.5s 2.5s;
-}
-
-@keyframes fadein {
-  from { bottom: 0; opacity: 0; }
-  to { bottom: 30px; opacity: 1; }
-}
-@keyframes fadeout {
-  from { bottom: 30px; opacity: 1; }
-  to { bottom: 0; opacity: 0; }
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
 /* Tắt hiệu ứng sáng góc khi bấm div.product */
