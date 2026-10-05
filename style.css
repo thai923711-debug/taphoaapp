@@ -220,9 +220,13 @@ body {
 /* Cart Overlay */
 #cart-overlay {
   position: fixed;
-  top: 0; right: 0;
-  width: 100%; height: 100%;
-  background: #2c2c3e; /* nền tối */
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100dvh;
+  background: #2c2c3e;
   display: none;
   flex-direction: column;
   z-index: 3000;
@@ -230,16 +234,11 @@ body {
   opacity: 0;
   transform: translateY(20px);
   transition: opacity 0.3s ease, transform 0.3s ease;
-  backdrop-filter: blur(10px); /* Làm mờ nền phía sau giỏ hàng */
-      border-top-left-radius: 20px;
-      border-top-right-radius: 20px;
-      box-shadow: 0 -5px 25px rgba(0,0,0,0.5);
-  }
+  box-sizing: border-box;
 }
 
-/* Làm cho các dòng trong bảng tách biệt hơn */
 #selected-list tr {
-    border-bottom: 1px solid #3a3a4d;
+  border-bottom: 1px solid #3a3a4d;
 }
 
 #cart-overlay.show {
@@ -248,16 +247,17 @@ body {
   transform: translateY(0);
 }
 
-/* Cart header */
+/* Cart header - Thụt xuống né tai thỏ */
 #cart-header {
-  padding: 10px;
-  background: #2c2c3e; /* nền tối */
+  padding: calc(12px + env(safe-area-inset-top, 0px)) 15px 12px 15px;
+  background: #232332;
   color: #fff;
   display: flex;
   justify-content: space-between;
   align-items: center;
   font-weight: bold;
   border-bottom: 2px solid #ff9800;
+  flex-shrink: 0;
 }
 
 /* Cart table */
@@ -270,24 +270,33 @@ body {
   border-radius: 6px;
   overflow: hidden;
   box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
-#cart-overlay thead,
+#cart-overlay thead {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+  flex-shrink: 0;
+}
+
+#cart-overlay tbody {
+  display: block;
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: #ff9800 #2c2c3e;
+}
+
 #cart-overlay tbody tr {
   display: table;
   width: 100%;
   table-layout: fixed;
 }
 
-#cart-overlay tbody {
-  display: block;
-  max-height: 60vh;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: #ff9800 #2c2c3e;
-}
-
-/* Chrome, Edge, Safari */
 #cart-overlay tbody::-webkit-scrollbar {
   width: 8px;
 }
@@ -314,7 +323,6 @@ body {
   text-align: center;
 }
 
-/* Hover hàng trong bảng */
 #cart-overlay tbody tr:hover {
   background: #3f3f57;
 }
@@ -323,7 +331,7 @@ body {
 .qty-col button {
   border: none;
   padding: 2px 8px;
-  font-size: 12px
+  font-size: 12px;
   margin: 0 2px;
   border-radius: 4px;
   cursor: pointer;
@@ -333,7 +341,6 @@ body {
 }
 .qty-col button:active { transform: scale(0.9); }
 
-/* nút - đỏ */
 .qty-col button:first-child {
   background: #e74c3c;
 }
@@ -341,7 +348,6 @@ body {
   background: #c0392b;
 }
 
-/* nút + xanh */
 .qty-col button:last-child {
   background: #27ae60;
 }
@@ -349,7 +355,6 @@ body {
   background: #1e8449;
 }
 
-/* Remove button */
 #cart-overlay td span {
   cursor: pointer;
   color: red;
@@ -361,14 +366,15 @@ body {
 
 /* Copy button */
 #copyBtn {
-  margin: 10px;
-  padding: 10px;
+  margin: 10px 15px calc(12px + env(safe-area-inset-bottom, 0px)) 15px;
+  padding: 12px;
   background: #ff9800;
   border: none;
   border-radius: 6px;
   font-weight: bold;
   cursor: pointer;
   color: #000;
+  flex-shrink: 0;
   transition: background 0.3s ease, transform 0.2s ease;
 }
 #copyBtn:hover { background: #e67e22; color: #fff; transform: scale(1.05); }
@@ -812,7 +818,7 @@ body {
     cursor: pointer;
     font-weight: bold;
 }
-3. Fil
+
 
 /* Hình ảnh nhỏ trong ghi chú */
 .check-thumb {
