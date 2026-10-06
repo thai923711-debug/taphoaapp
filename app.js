@@ -156,7 +156,6 @@ function renderCategories() {
   categoryList.appendChild(allItem);
 
   // 2. Fix lỗi: Kiểm tra và nạp danh mục từ products.js
-  // Dùng Object.keys để lấy tất cả Gia vị, Sữa, Mì...
   if (typeof products !== 'undefined' && products !== null) {
      Object.keys(products).forEach(cat => {
          let li = document.createElement("li");
@@ -177,12 +176,24 @@ function renderCategories() {
   // 3. Thêm mục Lịch sử
   let historyItem = document.createElement("li");
   historyItem.textContent = "📜 Xem lịch sử";
-  historyItem.style.marginTop = "20px"; // Cho nó tách ra một chút cho đẹp
+  historyItem.style.marginTop = "20px";
   historyItem.onclick = () => {
     document.getElementById("sidebar").classList.remove("open");
     toggleHistory();
   };
   categoryList.appendChild(historyItem);
+
+  // 4. Thêm nút Cập nhật ứng dụng (Đặt ĐÚNG TRONG HÀM này)
+  let updateItem = document.createElement("li");
+  updateItem.textContent = "🔄 Cập nhật bản mới";
+  updateItem.style.marginTop = "10px";
+  updateItem.style.background = "#27ae60";
+  updateItem.style.color = "#fff";
+  updateItem.onclick = () => {
+    document.getElementById("sidebar").classList.remove("open");
+    forceUpdateApp();
+  };
+  categoryList.appendChild(updateItem);
 }
 
 // 4. Thêm nút Cập nhật ứng dụng (Xóa cache)
