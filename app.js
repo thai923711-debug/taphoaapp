@@ -176,18 +176,18 @@ function renderCategories() {
   // 3. Thêm mục Lịch sử
   let historyItem = document.createElement("li");
   historyItem.textContent = "📜 Xem lịch sử";
-  historyItem.style.marginTop = "20px";
+  historyItem.style.marginTop = "20px"; // Cho nó tách ra một chút cho đẹp
   historyItem.onclick = () => {
     document.getElementById("sidebar").classList.remove("open");
     toggleHistory();
   };
   categoryList.appendChild(historyItem);
 
-  // 4. Thêm nút Cập nhật ứng dụng (Đặt ĐÚNG TRONG HÀM này)
+  // 4. Thêm nút Cập nhật ứng dụng (Xóa cache)
   let updateItem = document.createElement("li");
   updateItem.textContent = "🔄 Cập nhật bản mới";
   updateItem.style.marginTop = "10px";
-  updateItem.style.background = "#27ae60";
+  updateItem.style.background = "#27ae60"; // Màu xanh lá nổi bật
   updateItem.style.color = "#fff";
   updateItem.onclick = () => {
     document.getElementById("sidebar").classList.remove("open");
