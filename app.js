@@ -183,18 +183,6 @@ function renderCategories() {
   };
   categoryList.appendChild(historyItem);
 
-  // 4. Thêm nút Cập nhật ứng dụng (Xóa cache)
-  let updateItem = document.createElement("li");
-  updateItem.textContent = "🔄 Cập nhật bản mới";
-  updateItem.style.marginTop = "10px";
-  updateItem.style.background = "#27ae60"; // Màu xanh lá nổi bật
-  updateItem.style.color = "#fff";
-  updateItem.onclick = () => {
-    document.getElementById("sidebar").classList.remove("open");
-    forceUpdateApp();
-  };
-  categoryList.appendChild(updateItem);
-}
 
 // 4. Thêm nút Cập nhật ứng dụng (Xóa cache)
   let updateItem = document.createElement("li");
@@ -206,6 +194,7 @@ function renderCategories() {
     forceUpdateApp();
   };
   categoryList.appendChild(updateItem);
+}
 
 // ====== Quản lý giỏ hàng ======
 function toggleProduct(name) {
