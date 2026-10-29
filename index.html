@@ -4,119 +4,236 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Tạp Hóa Thanh Trúc</title>
-    <link rel="stylesheet" href="style.css?v=1.1">
+    <meta name="description" content="Danh mục hàng tạp hóa, chọn nhanh bằng chữ cái đầu và sao chép danh sách đi lấy hàng.">
+    <meta name="theme-color" content="#0f1420">
+    <meta name="color-scheme" content="dark">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Tạp Hóa">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="icons/icon-192.png" sizes="192x192">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div id="toast"></div>
 
-<div id="history-overlay">
-    <div id="history-header" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #444;">
-        <h2 style="margin: 0;">📜 Lịch Sử</h2>
-        <div style="display: flex; gap: 10px; align-items: center;">
-            <button id="clear-history" onclick="clearHistory()" style="background: #e74c3c; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold;">
-                Xóa tất cả
-            </button>
-            <span onclick="toggleHistory()" style="cursor:pointer; font-size: 20px;">❌</span>
+<!-- Icon sprite: one copy, referenced everywhere with <use>. -->
+<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+    <symbol id="i-cart" viewBox="0 0 24 24"><path d="M3 4h2.2l2.3 11.2a2 2 0 0 0 2 1.6h7.9a2 2 0 0 0 2-1.55L21 8H6"/><circle cx="10" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/></symbol>
+    <symbol id="i-note" viewBox="0 0 24 24"><path d="M15.5 3.5l5 5L9 20H4v-5z"/><path d="M13.5 5.5l5 5"/></symbol>
+    <symbol id="i-history" viewBox="0 0 24 24"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3 4.5V10h5.5"/><path d="M12 8v4.5l3 1.8"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M9.5 4h5"/><path d="M6.5 7l1 12.2a1.8 1.8 0 0 0 1.8 1.8h5.4a1.8 1.8 0 0 0 1.8-1.8L18 7"/><path d="M10.5 11v6M13.5 11v6"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M4.5 12.8l5 5.2L19.5 6.5"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24"><path d="M4 9h9.5A5.5 5.5 0 0 1 19 14.5v0A5.5 5.5 0 0 1 13.5 20H8"/><path d="M8 4.5L3.5 9 8 13.5"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2.5"/><path d="M15 5.5A2.5 2.5 0 0 0 12.5 3H6.5A2.5 2.5 0 0 0 4 5.5v6A2.5 2.5 0 0 0 6.5 14"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9-5.2-2.9-5.2 2.9 1-5.9L3.5 9.7l5.9-.8z"/></symbol>
+</svg>
+
+<div id="app">
+    <header id="top-bar">
+        <button id="menu-btn" class="icon-btn" aria-label="Mở danh mục" aria-expanded="false" aria-controls="sidebar">
+            <svg class="ico"><use href="#i-menu"/></svg>
+        </button>
+
+        <div class="brand">
+            <h1>Tạp Hóa Thanh Trúc</h1>
+            <p id="current-time">—</p>
         </div>
+
+        <div class="top-actions">
+            <button id="note-icon" class="icon-btn" aria-label="Kiểm hàng">
+                <svg class="ico"><use href="#i-note"/></svg>
+                <span id="note-count" class="dot" hidden>0</span>
+            </button>
+            <button id="cart-icon" class="icon-btn cart-btn" aria-label="Giỏ hàng">
+                <svg class="ico"><use href="#i-cart"/></svg>
+                <span id="cart-count" class="count">0</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="search-row">
+        <label class="search-box" for="search-box">
+            <svg class="ico"><use href="#i-search"/></svg>
+            <input type="text" id="search-box" placeholder="Gõ tên hoặc chữ cái đầu (vd: mhh)" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search">
+            <button id="search-clear" class="icon-btn tiny" type="button" aria-label="Xoá tìm kiếm" hidden>
+                <svg class="ico"><use href="#i-close"/></svg>
+            </button>
+        </label>
     </div>
-    <div id="history-content" style="flex: 1; overflow-y: auto; padding: 10px;"></div>
+
+    <main id="product-container" class="product-container" aria-live="polite"></main>
+
+    <div id="empty-state" class="empty-state" hidden>
+        <svg class="ico big"><use href="#i-search"/></svg>
+        <p>Không tìm thấy sản phẩm nào</p>
+        <button id="empty-reset" class="btn btn-ghost" type="button">Xoá bộ lọc</button>
+    </div>
 </div>
 
-<div id="sidebar">
-    <h2>Danh Mục</h2>
+<div id="scrim" class="scrim"></div>
+
+<aside id="sidebar" class="sidebar" aria-label="Danh mục sản phẩm" aria-hidden="true">
+    <div class="sidebar-head">
+        <h2>Danh Mục</h2>
+        <button class="icon-btn" data-close-sidebar aria-label="Đóng danh mục">
+            <svg class="ico"><use href="#i-close"/></svg>
+        </button>
+    </div>
     <ul id="categories"></ul>
-</div>
-
-<div id="main-container">
-    <div id="top-bar">
-        <span id="menu-btn">☰</span>
-        <h2>Danh Sách Sản Phẩm</h2>
-        <div style="display: flex; gap: 10px; align-items: center;">
-            <div id="note-icon" onclick="toggleNote()" style="background: #3498db; color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px;">
-                📝 Ghi chú
-            </div>
-            <div id="cart-icon" onclick="toggleCart()">
-                🛒 <span id="cart-count">0</span>
-            </div>
-        </div>
-    </div>
-
-    <input type="text" id="search-box" placeholder="Nhập chữ cái đầu...">
-    <div id="current-time"></div>
-
-    <div id="product-container" class="product-container"></div>
-</div>
-
-<div id="cart-overlay">
-    <div id="cart-header">
-        <h2>🛒 Giỏ Hàng <span id="cart-total-count">(0)</span></h2>
-        <button id="clear-all-btn" onclick="clearAllCart()" style="background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; margin-left: auto; margin-right: 15px;">
-            🗑 Xóa tất cả
+    <div class="sidebar-foot">
+        <button id="history-btn" class="sidebar-link" type="button">
+            <svg class="ico"><use href="#i-history"/></svg>
+            <span>Xem lịch sử</span>
         </button>
-        <span onclick="toggleCart()" style="cursor:pointer">❌</span>
-    </div>
-    <table>
-        <thead>
-        <tr>
-            <th>SL</th>
-            <th>Sản phẩm</th>
-            <th>Xóa</th>
-        </tr>
-        </thead>
-        <tbody id="selected-list"></tbody>
-    </table>
-    <button id="copyBtn" onclick="copyList()">📋 Sao chép</button>
-</div>
-
-<div id="note-overlay" class="overlay-common">
-    <div class="overlay-header">
-        <h2>📝 Kiểm Hàng</h2>
-        <button id="clear-all-note" onclick="clearAllNote()" style="background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; margin-left: auto; margin-right: 15px;">
-            🗑 Xóa tất cả
-        </button>
-        <span onclick="toggleNote()" style="cursor:pointer">❌</span>
-    </div>
-    <div style="padding: 15px;">
-        <textarea id="note-input" placeholder="Dán danh sách đã copy vào đây..." style="width: 100%; height: 100px; border-radius: 8px; padding: 10px; background: #1e293b; color: white; border: 1px solid #3498db; width: 100%; box-sizing: border-box;"></textarea>
-        <button onclick="processNote()" style="width: 100%; margin-top: 10px; padding: 12px; background: #3498db; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer;">
-            📥 Nhập danh sách kiểm hàng
+        <button id="update-btn" class="sidebar-link accent" type="button">
+            <svg class="ico"><use href="#i-star"/></svg>
+            <span>Cập nhật bản mới</span>
         </button>
     </div>
-    <div id="note-items-container" style="flex: 1; overflow-y: auto; padding: 0 15px;"></div>
-    <div style="padding: 15px; border-top: 1px solid #444; display: flex; gap: 10px;">
-        <button onclick="toggleTrash()" style="flex: 1; padding: 10px; background: #95a5a6; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer;">
-            🗑 Thùng rác (<span id="trash-count">0</span>)
-        </button>
-    </div>
-</div>
+</aside>
 
-<div id="trash-overlay" class="overlay-common">
-    <div class="overlay-header" style="display: flex; justify-content: space-between; align-items: center;">
-        <h2>🗑 Thùng Rác</h2>
-        <div style="display: flex; gap: 10px; align-items: center;">
-            <button onclick="clearAllTrash()" style="background: #e74c3c; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold;">
-                Xóa tất cả
+<!-- ================= GIỎ HÀNG ================= -->
+<section id="cart-overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="cart-title">
+    <header class="ov-head">
+        <h2 id="cart-title">
+            <svg class="ico"><use href="#i-cart"/></svg>
+            Giỏ Hàng <span id="cart-total-count" class="muted">(0)</span>
+        </h2>
+        <div class="ov-actions">
+            <button id="clear-all-btn" class="btn btn-danger-ghost" type="button">Xoá tất cả</button>
+            <button class="icon-btn" data-close aria-label="Đóng giỏ hàng">
+                <svg class="ico"><use href="#i-close"/></svg>
             </button>
-            <span onclick="toggleTrash()" style="cursor:pointer; font-size: 20px;">❌</span>
+        </div>
+    </header>
+
+    <div class="ov-body">
+        <ul id="selected-list" class="cart-list"></ul>
+        <div id="cart-empty" class="empty-state small" hidden>
+            <svg class="ico big"><use href="#i-cart"/></svg>
+            <p>Giỏ hàng đang trống</p>
         </div>
     </div>
-    <div id="trash-items-container" style="flex: 1; overflow-y: auto; padding: 15px;"></div>
-</div>
 
-<div id="confirm-overlay" class="confirm-overlay">
+    <footer class="ov-foot">
+        <button id="copyBtn" class="btn btn-primary btn-block" type="button">
+            <svg class="ico"><use href="#i-copy"/></svg>
+            Sao chép danh sách
+        </button>
+    </footer>
+</section>
+
+<!-- ================= KIỂM HÀNG ================= -->
+<section id="note-overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="note-title">
+    <header class="ov-head">
+        <h2 id="note-title">
+            <svg class="ico"><use href="#i-note"/></svg>
+            Kiểm Hàng <span id="note-total-count" class="muted">(0)</span>
+        </h2>
+        <div class="ov-actions">
+            <button id="clear-all-note" class="btn btn-danger-ghost" type="button">Xoá tất cả</button>
+            <button class="icon-btn" data-close aria-label="Đóng kiểm hàng">
+                <svg class="ico"><use href="#i-close"/></svg>
+            </button>
+        </div>
+    </header>
+
+    <div class="ov-body">
+        <div class="paste-box">
+            <textarea id="note-input" rows="3" placeholder="Dán danh sách đã sao chép vào đây — mỗi dòng một món…"></textarea>
+            <button id="import-note" class="btn btn-primary" type="button">Nhập danh sách</button>
+        </div>
+        <div id="note-items-container" class="check-list"></div>
+        <div id="note-empty" class="empty-state small" hidden>
+            <svg class="ico big"><use href="#i-note"/></svg>
+            <p>Chưa có món nào để kiểm</p>
+        </div>
+    </div>
+
+    <footer class="ov-foot">
+        <button id="trash-btn" class="btn btn-ghost btn-block" type="button">
+            <svg class="ico"><use href="#i-trash"/></svg>
+            <span>Thùng rác (<span id="trash-count">0</span>)</span>
+        </button>
+    </footer>
+</section>
+
+<!-- ================= THÙNG RÁC ================= -->
+<section id="trash-overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="trash-title">
+    <header class="ov-head">
+        <h2 id="trash-title">
+            <svg class="ico"><use href="#i-trash"/></svg>
+            Thùng Rác <span id="trash-total-count" class="muted">(0)</span>
+        </h2>
+        <div class="ov-actions">
+            <button id="clear-all-trash" class="btn btn-danger-ghost" type="button">Xoá tất cả</button>
+            <button class="icon-btn" data-close aria-label="Đóng thùng rác">
+                <svg class="ico"><use href="#i-close"/></svg>
+            </button>
+        </div>
+    </header>
+    <div class="ov-body">
+        <div id="trash-items-container" class="check-list"></div>
+        <div id="trash-empty" class="empty-state small" hidden>
+            <svg class="ico big"><use href="#i-trash"/></svg>
+            <p>Thùng rác đang trống</p>
+        </div>
+    </div>
+</section>
+
+<!-- ================= LỊCH SỬ ================= -->
+<section id="history-overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="history-title">
+    <header class="ov-head">
+        <h2 id="history-title">
+            <svg class="ico"><use href="#i-history"/></svg>
+            Lịch Sử
+        </h2>
+        <div class="ov-actions">
+            <button id="clear-history" class="btn btn-danger-ghost" type="button">Xoá tất cả</button>
+            <button class="icon-btn" data-close aria-label="Đóng lịch sử">
+                <svg class="ico"><use href="#i-close"/></svg>
+            </button>
+        </div>
+    </header>
+    <div class="ov-body">
+        <div id="history-content" class="history-list"></div>
+        <div id="history-empty" class="empty-state small" hidden>
+            <svg class="ico big"><use href="#i-history"/></svg>
+            <p>Chưa có hoạt động nào</p>
+        </div>
+    </div>
+</section>
+
+<!-- ================= XÁC NHẬN ================= -->
+<div id="confirm-overlay" class="confirm-overlay" role="dialog" aria-modal="true" aria-labelledby="confirm-message">
     <div class="confirm-box">
         <p id="confirm-message"></p>
         <div class="confirm-buttons">
-            <button id="confirm-yes">Đồng ý</button>
-            <button id="confirm-no">Hủy</button>
+            <button id="confirm-no" class="btn btn-ghost" type="button">Huỷ</button>
+            <button id="confirm-yes" class="btn btn-danger" type="button">Đồng ý</button>
         </div>
     </div>
 </div>
-<div id="image-zoom-overlay" onclick="this.style.display='none'">
-    <img id="zoomed-image" src="" alt="Zoomed Product">
+
+<!-- ================= ZOOM ẢNH ================= -->
+<div id="image-zoom-overlay" class="zoom-overlay" aria-hidden="true">
+    <img id="zoomed-image" src="" alt="">
 </div>
 
-<script src="products.js?v=1.2"></script>
-<script src="app.js?v=1.2"></script>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<noscript>
+    <p style="padding:20px;color:#fff">Trang này cần JavaScript để hoạt động.</p>
+</noscript>
+
+<script src="products.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
