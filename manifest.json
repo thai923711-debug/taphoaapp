@@ -1,0 +1,36 @@
+{
+    "name": "Tạp Hóa Thanh Trúc",
+    "short_name": "Tạp Hóa",
+    "description": "Danh mục hàng tạp hóa, chọn nhanh bằng chữ cái đầu và sao chép danh sách đi lấy hàng.",
+    "lang": "vi",
+    "dir": "ltr",
+    "start_url": "./",
+    "scope": "./",
+    "id": "taphoa-thanh-truc",
+    "display": "standalone",
+    "display_override": ["standalone", "minimal-ui"],
+    "orientation": "portrait-primary",
+    "background_color": "#0f1420",
+    "theme_color": "#0f1420",
+    "categories": ["shopping", "productivity"],
+    "icons": [
+        {
+            "src": "./icons/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "./icons/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "./icons/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}
