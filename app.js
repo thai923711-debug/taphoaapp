@@ -156,17 +156,30 @@ function attachImage(img, name) {
     const sources = [imagePath(name, "webp"), imagePath(name, "jpg")];
     let index = 0;
 
-    img.addEventListener("error", () => {
+    // Ảnh hiện dần. Gắn class một lần, gỡ listener ngay.
+    const settled = () => {
+        img.classList.add("is-loaded");
+        img.removeEventListener("load", settled);
+        img.removeEventListener("error", onError);
+    };
+
+    const onError = () => {
         index += 1;
         if (index < sources.length) {
             img.src = sources[index];
             return;
         }
-        img.classList.add("is-missing");
+        img.removeEventListener("error", onError);
+        img.removeEventListener("load", settled);
+        img.classList.add("is-missing", "is-loaded");
         img.src = PLACEHOLDER_IMG;
-    });
+    };
+
+    img.addEventListener("load", settled);
+    img.addEventListener("error", onError);
 
     img.src = sources[0];
+    if (img.complete && img.naturalWidth) settled();
 }
 
 /* ---------------- state ---------------- */
@@ -262,13 +275,32 @@ function answerConfirm(ok) {
 
 const overlayStack = [];
 
+function staggerSheet(overlay) {
+    const body = overlay.querySelector(".ov-body");
+    if (!body) return;
+    // Chỉ so le vài phần tử đầu, danh sách dài thì để yên.
+    let i = 0;
+    for (const child of body.children) {
+        if (child.hidden) continue;
+        if (i < 6) child.style.setProperty("--i", i);
+        else child.style.removeProperty("--i");
+        i++;
+    }
+}
+
+function syncSheetState() {
+    document.body.classList.toggle("sheet-open", overlayStack.length > 0);
+}
+
 function openOverlay(id, onOpen) {
     const overlay = document.getElementById(id);
     if (!overlay || overlay.classList.contains("open")) return;
     overlay.classList.add("open");
     overlay.setAttribute("aria-hidden", "false");
     overlayStack.push(id);
+    syncSheetState();
     if (typeof onOpen === "function") onOpen();
+    staggerSheet(overlay);
 }
 
 function closeOverlay(id) {
@@ -278,6 +310,71 @@ function closeOverlay(id) {
     overlay.setAttribute("aria-hidden", "true");
     const idx = overlayStack.lastIndexOf(id);
     if (idx >= 0) overlayStack.splice(idx, 1);
+    syncSheetState();
+}
+
+// Kéo thanh tiêu đề xuống để đóng, chỉ trên cảm ứng.
+function enableSwipeToClose(overlay) {
+    const head = overlay.querySelector(".ov-head");
+    if (!head) return;
+
+    let startY = 0;
+    let startX = 0;
+    let dragY = 0;
+    let active = false;
+    let decided = false;
+    let horizontal = false;
+
+    head.addEventListener(
+        "pointerdown",
+        (event) => {
+            if (event.pointerType === "mouse") return;
+            active = true;
+            decided = false;
+            horizontal = false;
+            dragY = 0;
+            startY = event.clientY;
+            startX = event.clientX;
+        },
+        { passive: true }
+    );
+
+    head.addEventListener(
+        "pointermove",
+        (event) => {
+            if (!active) return;
+            const dy = event.clientY - startY;
+            const dx = event.clientX - startX;
+
+            // Vuốt ngang thì nhả ra cho trình duyệt xử lý.
+            if (!decided && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
+                decided = true;
+                horizontal = Math.abs(dx) > Math.abs(dy);
+            }
+            if (horizontal) return;
+
+            dragY = Math.max(0, dy);
+            if (dragY > 4) {
+                overlay.classList.add("dragging");
+                overlay.style.setProperty("--drag", `${dragY}px`);
+            }
+        },
+        { passive: true }
+    );
+
+    const finish = () => {
+        if (!active) return;
+        active = false;
+        if (!overlay.classList.contains("dragging")) return;
+        overlay.classList.remove("dragging");
+        overlay.style.removeProperty("--drag");
+        if (!horizontal && dragY > 90) closeOverlay(overlay.id);
+        dragY = 0;
+    };
+
+    head.addEventListener("pointerup", finish, { passive: true });
+    head.addEventListener("pointercancel", finish, { passive: true });
+    head.addEventListener("pointerleave", finish, { passive: true });
 }
 
 function closeTopLayer() {
@@ -389,12 +486,24 @@ function cartCount() {
     return Object.values(cart).reduce((sum, qty) => sum + qty, 0);
 }
 
+let lastCartTotal = null;
+
 function updateCartBadge() {
     const total = cartCount();
     const count = $("#cart-count");
     const totalCount = $("#cart-total-count");
-    if (count) count.textContent = total;
+    if (count) {
+        count.textContent = total;
+        // Nhảy nhẹ khi số lượng đổi, không nhảy lúc mới mở app.
+        if (lastCartTotal !== null && total !== lastCartTotal) {
+            count.classList.remove("bump");
+            void count.offsetWidth;
+            count.classList.add("bump");
+            setTimeout(() => count.classList.remove("bump"), 340);
+        }
+    }
     if (totalCount) totalCount.textContent = `(${total})`;
+    lastCartTotal = total;
 }
 
 function addProduct(name, sourceEl, event) {
@@ -403,12 +512,22 @@ function addProduct(name, sourceEl, event) {
     saveCart();
     syncCard(name, true);
     updateCartBadge();
-    if (sourceEl) pulseBadge(sourceEl);
+    if (sourceEl) {
+        pulseBadge(sourceEl);
+        popCard(sourceEl);
+    }
 
     const point = event && typeof event.clientX === "number" && event.clientX
         ? { x: event.clientX, y: event.clientY }
         : centerOf(sourceEl);
     if (point) flyToCart(point.x, point.y);
+}
+
+function popCard(card) {
+    card.classList.remove("just-added");
+    void card.offsetWidth;
+    card.classList.add("just-added");
+    setTimeout(() => card.classList.remove("just-added"), 320);
 }
 
 function decProduct(name) {
@@ -628,12 +747,14 @@ function pulseBadge(card) {
     badge.classList.add("pulse");
 }
 
-function buildCard(name) {
+function buildCard(name, index) {
     const card = el("article", "product");
     card.dataset.name = name;
     card.setAttribute("role", "button");
     card.setAttribute("aria-label", `Thêm ${name} vào giỏ`);
     card.tabIndex = 0;
+    // Chỉ 12 thẻ đầu so le, phần còn lại vào cùng lúc cho khỏi nặng.
+    if (index < 12) card.style.setProperty("--i", index);
 
     const wrap = el("div", "thumb-wrap");
 
@@ -663,7 +784,46 @@ function buildCard(name) {
     return card;
 }
 
-function renderProducts() {
+// Câu trong trạng thái rỗng: nói rõ đang lọc cái gì.
+function updateEmptyText() {
+    const text = $("#empty-text");
+    if (!text) return;
+    const q = searchQuery.trim();
+    if (q) {
+        text.textContent = `Không có món nào khớp “${q}”`;
+    } else if (currentCategory !== "Tất cả") {
+        text.textContent = `Mục “${currentCategory}” chưa có món nào`;
+    } else {
+        text.textContent = "Không tìm thấy sản phẩm nào";
+    }
+}
+
+// Dòng đếm kết quả ngay dưới ô tìm kiếm.
+function updateListMeta(shown) {
+    const meta = $("#list-meta");
+    if (!meta) return;
+
+    // Không có kết quả thì để trạng thái rỗng nói, khỏi nói hai lần.
+    if (shown === 0) {
+        meta.replaceChildren();
+        return;
+    }
+
+    const frag = document.createDocumentFragment();
+    const strong = el("b", null, String(shown));
+
+    if (searchQuery.trim()) {
+        frag.append("Tìm thấy ", strong, " kết quả cho “", searchQuery.trim(), "”");
+    } else if (currentCategory !== "Tất cả") {
+        frag.append(strong, " sản phẩm · ", currentCategory);
+    } else {
+        frag.append(strong, " sản phẩm");
+    }
+
+    meta.replaceChildren(frag);
+}
+
+function renderProducts({ intro = false } = {}) {
     const container = $("#product-container");
     const emptyState = $("#empty-state");
     if (!container) return;
@@ -671,19 +831,30 @@ function renderProducts() {
     cardByName.clear();
     const frag = document.createDocumentFragment();
     let shown = 0;
+    let index = 0;
 
     for (const item of catalog) {
         if (currentCategory !== "Tất cả" && item.category !== currentCategory) continue;
         if (!matchesSearch(item.name, searchQuery)) continue;
-        frag.appendChild(buildCard(item.name));
+        frag.appendChild(buildCard(item.name, index));
         shown++;
+        index++;
     }
 
+    container.classList.toggle("intro", intro);
     container.replaceChildren(frag);
     container.hidden = shown === 0;
     if (emptyState) emptyState.hidden = shown !== 0;
+    if (shown === 0) updateEmptyText();
     container.scrollTop = 0;
     updateCartBadge();
+    updateListMeta(shown);
+
+    if (intro) {
+        // Gỡ sau khi chạy xong để lần lọc sau không diễn lại.
+        setTimeout(() => container.classList.remove("intro"), 900);
+    }
+    updateScrollUi();
 }
 
 function renderCategories() {
@@ -695,10 +866,11 @@ function renderCategories() {
     const counts = new Map();
     for (const item of catalog) counts.set(item.category, (counts.get(item.category) || 0) + 1);
 
-    const makeItem = (label, value, count) => {
+    const makeItem = (label, value, count, index) => {
         const li = el("li");
         li.dataset.category = value;
         if (currentCategory === value) li.classList.add("active");
+        if (index < 9) li.style.setProperty("--i", index);
         li.append(el("span", "cat-name", label), el("span", "cat-count", String(count)));
         li.addEventListener("click", () => {
             currentCategory = value;
@@ -709,10 +881,10 @@ function renderCategories() {
         return li;
     };
 
-    list.appendChild(makeItem("Tất cả", "Tất cả", catalog.length));
-    for (const category of categoryNames) {
-        list.appendChild(makeItem(category, category, counts.get(category) || 0));
-    }
+    list.appendChild(makeItem("Tất cả", "Tất cả", catalog.length, 0));
+    categoryNames.forEach((category, i) => {
+        list.appendChild(makeItem(category, category, counts.get(category) || 0, i + 1));
+    });
 }
 
 /* ---------------- kiểm hàng / thùng rác ---------------- */
@@ -880,14 +1052,127 @@ function clearAllTrash() {
 
 /* ---------------- hiệu ứng ---------------- */
 
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)");
+
 function centerOf(node) {
     if (!node || !node.getBoundingClientRect) return null;
     const rect = node.getBoundingClientRect();
     return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
 }
 
+// Gợn sóng nhỏ tại điểm chạm. Một phần tử, xoá ngay khi chạy xong.
+function spawnRipple(host, clientX, clientY) {
+    if (reduceMotion.matches || !host) return;
+
+    const rect = host.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height) * 1.1;
+    const dot = el("span", "ripple");
+    dot.style.width = `${size}px`;
+    dot.style.height = `${size}px`;
+    dot.style.left = `${clientX - rect.left - size / 2}px`;
+    dot.style.top = `${clientY - rect.top - size / 2}px`;
+    host.appendChild(dot);
+    setTimeout(() => dot.remove(), 500);
+}
+
+// Thẻ sản phẩm: vệt sáng theo ngón tay + gợn sóng.
+function bindCardFeedback() {
+    const container = $("#product-container");
+    if (!container) return;
+
+    container.addEventListener(
+        "pointerdown",
+        (event) => {
+            const card = event.target.closest(".product");
+            if (!card) return;
+            const rect = card.getBoundingClientRect();
+            card.style.setProperty("--mx", `${event.clientX - rect.left}px`);
+            card.style.setProperty("--my", `${event.clientY - rect.top}px`);
+            card.classList.add("touching");
+        },
+        { passive: true }
+    );
+
+    const release = () => {
+        for (const card of container.querySelectorAll(".product.touching")) {
+            card.classList.remove("touching");
+        }
+    };
+    container.addEventListener("pointerup", release, { passive: true });
+    container.addEventListener("pointercancel", release, { passive: true });
+    container.addEventListener("pointerleave", release, { passive: true });
+
+    // Máy có chuột thì vệt sáng chạy theo con trỏ.
+    if (finePointer.matches) {
+        let lastCard = null;
+        container.addEventListener("pointermove", (event) => {
+            const card = event.target.closest(".product");
+            if (!card) return;
+            if (card !== lastCard) {
+                if (lastCard) lastCard.classList.remove("touching");
+                lastCard = card;
+            }
+            const rect = card.getBoundingClientRect();
+            card.style.setProperty("--mx", `${event.clientX - rect.left}px`);
+            card.style.setProperty("--my", `${event.clientY - rect.top}px`);
+            card.classList.add("touching");
+        });
+        container.addEventListener("pointerleave", () => {
+            if (lastCard) lastCard.classList.remove("touching");
+            lastCard = null;
+        });
+    }
+}
+
+// Gợn sóng cho nút bấm.
+function bindButtonFeedback() {
+    const selector = ".btn, .icon-btn, .mini-btn, .row-del, .card-minus, .stepper button, .sidebar-link";
+    document.addEventListener(
+        "pointerdown",
+        (event) => {
+            const host = event.target.closest(selector);
+            if (!host || host.disabled) return;
+            spawnRipple(host, event.clientX, event.clientY);
+        },
+        { passive: true }
+    );
+}
+
+let scrollRaf = 0;
+
+function updateScrollUi() {
+    const container = $("#product-container");
+    const bar = $("#top-bar");
+    const fab = $("#scroll-top");
+    if (!container) return;
+    const y = container.scrollTop;
+    if (bar) bar.classList.toggle("scrolled", y > 6);
+    if (fab) fab.classList.toggle("show", y > 700);
+}
+
+function bindScrollUi() {
+    const container = $("#product-container");
+    if (!container) return;
+    container.addEventListener(
+        "scroll",
+        () => {
+            if (scrollRaf) return;
+            scrollRaf = requestAnimationFrame(() => {
+                scrollRaf = 0;
+                updateScrollUi();
+            });
+        },
+        { passive: true }
+    );
+
+    $("#scroll-top")?.addEventListener("click", () => {
+        container.scrollTo({ top: 0, behavior: reduceMotion.matches ? "auto" : "smooth" });
+    });
+}
+
 function flyToCart(x, y) {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (reduceMotion.matches) return;
     const cartIcon = $("#cart-icon");
     if (!cartIcon || !document.body) return;
 
@@ -1191,7 +1476,7 @@ function changeQtyBy(name, delta) {
 function init() {
     buildCatalog();
     renderCategories();
-    renderProducts();
+    renderProducts({ intro: true });
     renderCart();
     renderHistory();
     renderChecking();
@@ -1199,6 +1484,11 @@ function init() {
     updateCartBadge();
     updateNoteBadges();
     bindEvents();
+
+    bindCardFeedback();
+    bindButtonFeedback();
+    bindScrollUi();
+    $$(".overlay").forEach(enableSwipeToClose);
 
     updateClock();
     setInterval(updateClock, 15000);
