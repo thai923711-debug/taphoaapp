@@ -1,9 +1,9 @@
 /* =========================================================
-   Service worker — app shell + cache ảnh
-   Đổi VERSION mỗi lần deploy để buộc trình duyệt lấy bản mới.
+   Service worker â€” app shell + cache áº£nh
+   Äá»•i VERSION má»—i láº§n deploy Ä‘á»ƒ buá»™c trÃ¬nh duyá»‡t láº¥y báº£n má»›i.
    ========================================================= */
 
-const VERSION = "3.1.0";
+const VERSION = "3.4.1";
 const SHELL_CACHE = `shell-${VERSION}`;
 const IMAGE_CACHE = `img-${VERSION}`;
 const MAX_IMAGES = 400;
@@ -23,11 +23,11 @@ self.addEventListener("install", (event) => {
     event.waitUntil(
         (async () => {
             const cache = await caches.open(SHELL_CACHE);
-            // Từng file một: một file lỗi không làm hỏng cả lần cài.
+            // Tá»«ng file má»™t: má»™t file lá»—i khÃ´ng lÃ m há»ng cáº£ láº§n cÃ i.
             await Promise.all(
                 SHELL_FILES.map((file) =>
                     cache.add(new Request(file, { cache: "reload" })).catch((err) => {
-                        console.warn("[sw] bỏ qua", file, err);
+                        console.warn("[sw] bá» qua", file, err);
                     })
                 )
             );
@@ -74,7 +74,7 @@ async function networkFirst(request) {
     } catch {
         const cached = (await cache.match(request)) || (await cache.match("./index.html"));
         if (cached) return cached;
-        throw new Error("offline và không có bản cache");
+        throw new Error("offline vÃ  khÃ´ng cÃ³ báº£n cache");
     }
 }
 
