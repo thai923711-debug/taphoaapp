@@ -7,6 +7,7 @@
     <meta name="description" content="Danh mục hàng tạp hóa, chọn nhanh bằng chữ cái đầu và sao chép danh sách đi lấy hàng.">
     <meta name="theme-color" content="#0f1420">
     <meta name="color-scheme" content="dark">
+    <meta name="format-detection" content="telephone=no, address=no, email=no">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -20,6 +21,7 @@
 
 <!-- Icon sprite: one copy, referenced everywhere with <use>. -->
 <svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+    <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 19V5"/><path d="M5.5 11.5L12 5l6.5 6.5"/></symbol>
     <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
     <symbol id="i-cart" viewBox="0 0 24 24"><path d="M3 4h2.2l2.3 11.2a2 2 0 0 0 2 1.6h7.9a2 2 0 0 0 2-1.55L21 8H6"/><circle cx="10" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/></symbol>
     <symbol id="i-note" viewBox="0 0 24 24"><path d="M15.5 3.5l5 5L9 20H4v-5z"/><path d="M13.5 5.5l5 5"/></symbol>
@@ -59,25 +61,31 @@
     </header>
 
     <div class="search-row">
-        <label class="search-box" for="search-box">
-            <svg class="ico"><use href="#i-search"/></svg>
-            <input type="text" id="search-box" placeholder="Gõ tên hoặc chữ cái đầu (vd: mhh)" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search">
+        <div class="search-box">
+            <svg class="ico" aria-hidden="true"><use href="#i-search"/></svg>
+            <label class="sr-only" for="search-box">Tìm sản phẩm</label>
+            <input type="text" id="search-box" placeholder="Tìm tên hoặc chữ cái đầu" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search">
             <button id="search-clear" class="icon-btn tiny" type="button" aria-label="Xoá tìm kiếm" hidden>
                 <svg class="ico"><use href="#i-close"/></svg>
             </button>
-        </label>
+        </div>
+        <p id="list-meta" class="list-meta" aria-live="polite"></p>
     </div>
 
-    <main id="product-container" class="product-container" aria-live="polite"></main>
+    <main id="product-container" class="product-container"></main>
 
     <div id="empty-state" class="empty-state" hidden>
         <svg class="ico big"><use href="#i-search"/></svg>
-        <p>Không tìm thấy sản phẩm nào</p>
-        <button id="empty-reset" class="btn btn-ghost" type="button">Xoá bộ lọc</button>
+        <p id="empty-text">Không tìm thấy sản phẩm nào</p>
+        <button id="empty-reset" class="btn btn-primary" type="button">Xoá bộ lọc</button>
     </div>
 </div>
 
 <div id="scrim" class="scrim"></div>
+
+<button id="scroll-top" class="scroll-top" type="button" aria-label="Lên đầu danh sách">
+    <svg class="ico"><use href="#i-up"/></svg>
+</button>
 
 <aside id="sidebar" class="sidebar" aria-label="Danh mục sản phẩm" aria-hidden="true">
     <div class="sidebar-head">
@@ -237,4 +245,3 @@
 <script src="app.js"></script>
 </body>
 </html>
-
