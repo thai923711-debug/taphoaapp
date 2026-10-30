@@ -17,9 +17,11 @@
     --blue: #38bdf8;
     --green: #22c55e;
     --red: #ef4444;
-    --radius: 16px;
-    --radius-sm: 10px;
+    --radius: 18px;
+    --radius-sm: 12px;
+    --radius-xs: 10px;
     --shadow: 0 14px 34px -14px rgba(0, 0, 0, 0.85);
+    --card-shadow: 0 6px 18px -12px rgba(0, 0, 0, 0.95);
     --head-h: 60px;
     --ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -38,7 +40,7 @@ body {
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
     background:
         radial-gradient(120% 70% at 50% -20%, #1c2740 0%, transparent 60%),
-        var(--bg);
+        linear-gradient(165deg, #121a29 0%, #0f1420 45%, #0c111b 100%);
     color: var(--text);
     min-height: 100vh;
     min-height: 100dvh;
@@ -62,6 +64,33 @@ button {
     background: none;
     border: 0;
     cursor: pointer;
+}
+
+/* Không cho bôi đen nhầm khi vuốt/chạm trên khung app. */
+#app,
+.sidebar,
+.overlay,
+.scroll-top {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+}
+
+/* Nội dung cần chọn được thì vẫn chọn được. */
+#selected-list,
+.check-list,
+.history-list,
+.paste-box textarea,
+#note-input {
+    -webkit-user-select: text;
+    user-select: text;
+}
+
+/* Vòng focus rõ ràng cho bàn phím, không hiện khi chạm. */
+:where(button, input, textarea, [tabindex]):focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 10px;
 }
 
 ul {
@@ -115,9 +144,7 @@ ul {
     align-items: center;
     gap: 10px;
     padding: calc(10px + env(safe-area-inset-top)) 14px 10px;
-    background: linear-gradient(180deg, rgba(20, 27, 42, 0.97), rgba(15, 20, 32, 0.88));
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
+    background: linear-gradient(180deg, rgba(20, 27, 42, 0.995), rgba(15, 20, 32, 0.97));
     border-bottom: 1px solid var(--line);
 }
 
@@ -127,23 +154,21 @@ ul {
 }
 
 .brand h1 {
-    font-size: 16px;
+    font-size: 17px;
     font-weight: 800;
-    letter-spacing: 0.2px;
+    letter-spacing: -0.2px;
     line-height: 1.2;
+    color: #fff;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    background: linear-gradient(90deg, #fff, #ffd79a);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
 }
 
 .brand p {
-    font-size: 12px;
+    font-size: 11.5px;
     color: var(--muted);
     margin-top: 2px;
+    letter-spacing: 0.1px;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
     overflow: hidden;
@@ -192,11 +217,13 @@ ul {
     height: 16px;
 }
 
+/* Nút mở danh mục để trung tính — chỉ giỏ hàng mang màu nhấn,
+   để mắt biết ngay đâu là hành động chính. */
 #menu-btn {
-    background: linear-gradient(150deg, var(--accent), var(--accent-2));
-    border: 0;
-    color: #2a1600;
-    box-shadow: 0 6px 16px -8px rgba(255, 140, 30, 0.9);
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    color: var(--text);
+    box-shadow: none;
 }
 
 .cart-btn {
@@ -254,24 +281,53 @@ ul {
 /* ---------------- search ---------------- */
 
 .search-row {
-    padding: 12px 14px 4px;
+    padding: 10px 14px 0;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Dòng đếm kết quả — cho biết đang xem bao nhiêu món. */
+.list-meta {
+    padding: 7px 4px 0;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.1px;
+    color: #7d8ca6;
+    font-variant-numeric: tabular-nums;
+    min-height: 22px;
+}
+
+.list-meta b {
+    color: var(--accent);
+    font-weight: 800;
 }
 
 .search-box {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 0 12px;
-    height: 46px;
+    padding: 0 8px 0 16px;
+    height: 52px;
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: 999px;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    transition: border-color 0.2s, background 0.2s;
 }
 
 .search-box:focus-within {
     border-color: var(--accent);
-    box-shadow: 0 0 0 4px var(--accent-soft);
+    background: var(--surface-2);
 }
 
 .search-box .ico {
@@ -286,7 +342,8 @@ ul {
     background: none;
     border: 0;
     outline: none;
-    font-size: 15px;
+    font-size: 16px;
+    height: 100%;
 }
 
 .search-box input::placeholder {
@@ -299,11 +356,11 @@ ul {
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 14px;
-    padding-bottom: calc(28px + env(safe-area-inset-bottom));
+    padding: 10px 14px 14px;
+    padding-bottom: calc(96px + env(safe-area-inset-bottom));
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 14px;
     align-content: start;
     overscroll-behavior: contain;
     scrollbar-width: thin;
@@ -332,22 +389,39 @@ ul {
     text-align: center;
     cursor: pointer;
     user-select: none;
+    isolation: isolate;
+    box-shadow: var(--card-shadow);
+    --mx: 50%;
+    --my: 50%;
     transition: transform 0.16s var(--ease), border-color 0.16s, box-shadow 0.16s, background 0.16s;
 }
 
-.product:hover {
-    transform: translateY(-3px);
-    border-color: #3d4c6e;
-    box-shadow: var(--shadow);
-}
-
-.product:active {
-    transform: scale(0.965);
+.product > * {
+    position: relative;
+    z-index: 2;
 }
 
 .product:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
+}
+
+/* Hiệu ứng rê chuột chỉ bật trên máy có chuột thật,
+   để điện thoại không bị dính trạng thái hover sau khi chạm. */
+@media (hover: hover) and (pointer: fine) {
+    .product:hover {
+        transform: translateY(-3px);
+        border-color: #3d4c6e;
+        box-shadow: var(--shadow);
+    }
+
+    .product:hover .thumb-wrap {
+        box-shadow: inset 0 0 0 1px rgba(255, 160, 40, 0.35);
+    }
+
+    .product:hover .product-img {
+        transform: scale(1.04);
+    }
 }
 
 .product .thumb-wrap {
@@ -357,21 +431,24 @@ ul {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(160deg, #f9fbfe, #e6ecf6);
-    border-radius: 12px;
+    background: linear-gradient(165deg, #fbfcff 0%, #eef2f9 55%, #e2e8f2 100%);
+    border-radius: 14px;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.75), inset 0 -10px 18px -14px rgba(15, 23, 42, 0.35);
     overflow: hidden;
 }
 
+/* Ảnh hiện dần khi tải xong; chưa xong thì để nền sáng của khung. */
 .product-img {
     width: 100%;
     height: 100%;
     object-fit: contain;
-    transition: transform 0.22s var(--ease);
+    opacity: 0;
+    transition: opacity 0.28s var(--ease), transform 0.22s var(--ease);
     filter: drop-shadow(0 4px 8px rgba(15, 23, 42, 0.16));
 }
 
-.product:hover .product-img {
-    transform: scale(1.06);
+.product-img.is-loaded {
+    opacity: 1;
 }
 
 .product-img.is-missing {
@@ -380,8 +457,8 @@ ul {
 }
 
 .product-name {
-    font-size: 12px;
-    line-height: 1.3;
+    font-size: 13px;
+    line-height: 1.35;
     color: #dbe3f1;
     display: -webkit-box;
     -webkit-line-clamp: 3;
@@ -389,24 +466,24 @@ ul {
     -webkit-box-orient: vertical;
     overflow: hidden;
     word-break: break-word;
-    min-height: 3.9em;
+    padding-bottom: 2px;
 }
 
 .qty-badge {
     position: absolute;
     top: 6px;
     right: 6px;
-    min-width: 22px;
-    height: 22px;
-    padding: 0 6px;
+    min-width: 26px;
+    height: 26px;
+    padding: 0 7px;
     border-radius: 999px;
     background: var(--red);
     color: #fff;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 800;
-    line-height: 22px;
+    line-height: 26px;
     text-align: center;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.55);
 }
 
 .qty-badge.pulse {
@@ -429,10 +506,19 @@ ul {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(15, 20, 32, 0.82);
-    border: 1px solid var(--line);
+    background: rgba(12, 16, 26, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     color: #ffd0d0;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
     transition: background 0.16s, transform 0.12s;
+}
+
+/* Vùng chạm rộng 42px dù nút chỉ vẽ 26px — ngón tay không trượt. */
+.card-minus::after {
+    content: "";
+    position: absolute;
+    inset: -8px;
+    border-radius: 999px;
 }
 
 .card-minus:hover {
@@ -449,14 +535,15 @@ ul {
     stroke-width: 2.6;
 }
 
+/* Món đã có trong giỏ: viền nhấn + nền sáng nhẹ, cùng hệ màu với nút chính. */
 .product.selected {
-    background: linear-gradient(180deg, rgba(56, 189, 248, 0.16), rgba(26, 34, 51, 0.95));
-    border-color: var(--blue);
-    box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.4), 0 12px 26px -16px rgba(56, 189, 248, 0.9);
+    background: linear-gradient(180deg, rgba(255, 160, 40, 0.12), rgba(26, 34, 51, 0.96));
+    border-color: rgba(255, 160, 40, 0.62);
+    box-shadow: inset 0 0 0 1px rgba(255, 160, 40, 0.22);
 }
 
 .product.selected .product-name {
-    color: #cdeeff;
+    color: #ffe6c4;
     font-weight: 600;
 }
 
@@ -505,16 +592,18 @@ ul {
 /* ---------------- buttons ---------------- */
 
 .btn {
+    position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    height: 44px;
-    padding: 0 18px;
-    border-radius: 12px;
-    font-size: 14.5px;
+    height: 48px;
+    padding: 0 20px;
+    border-radius: 14px;
+    font-size: 15px;
     font-weight: 700;
     border: 1px solid transparent;
+    overflow: hidden;
     transition: transform 0.14s var(--ease), background 0.18s, border-color 0.18s, opacity 0.18s;
     white-space: nowrap;
 }
@@ -570,13 +659,24 @@ ul {
     width: 100%;
 }
 
+/* Nút chính trong chân tấm trượt: to nhất app, vì đây là nút bấm nhiều nhất. */
+.ov-foot .btn {
+    height: 54px;
+    font-size: 16px;
+    border-radius: 15px;
+}
+
+.ov-foot .btn .ico {
+    width: 20px;
+    height: 20px;
+}
+
 /* ---------------- sidebar ---------------- */
 
 .scrim {
     position: fixed;
     inset: 0;
-    background: rgba(5, 8, 14, 0.6);
-    backdrop-filter: blur(2px);
+    background: rgba(5, 8, 14, 0.62);
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.24s var(--ease);
@@ -639,8 +739,8 @@ ul {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 11px 12px;
-    border-radius: 12px;
+    padding: 13px 14px;
+    border-radius: 13px;
     background: var(--surface);
     border: 1px solid transparent;
     font-size: 14px;
@@ -697,8 +797,8 @@ ul {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 12px;
-    border-radius: 12px;
+    padding: 14px;
+    border-radius: 13px;
     background: var(--surface);
     color: var(--text);
     font-size: 14px;
@@ -711,9 +811,9 @@ ul {
 }
 
 .sidebar-link.accent {
-    background: linear-gradient(135deg, rgba(34, 197, 94, 0.16), rgba(34, 197, 94, 0.06));
-    border: 1px solid rgba(34, 197, 94, 0.35);
-    color: #b6f5cc;
+    background: linear-gradient(135deg, rgba(255, 160, 40, 0.16), rgba(255, 160, 40, 0.05));
+    border: 1px solid rgba(255, 160, 40, 0.38);
+    color: #ffe0b8;
 }
 
 /* ---------------- overlay sheets ---------------- */
@@ -729,14 +829,20 @@ ul {
     padding-bottom: env(safe-area-inset-bottom);
     opacity: 0;
     visibility: hidden;
-    transform: translateY(18px) scale(0.995);
-    transition: opacity 0.24s var(--ease), transform 0.28s var(--ease), visibility 0.28s;
+    transform: translateY(26px) scale(0.985);
+    transition: opacity 0.26s var(--ease), transform 0.34s cubic-bezier(0.2, 0.9, 0.3, 1.02), visibility 0.34s;
 }
 
 .overlay.open {
     opacity: 1;
     visibility: visible;
     transform: none;
+}
+
+/* Kéo tiêu đề xuống để đóng (điện thoại). */
+.overlay.dragging {
+    transition: none;
+    transform: translateY(var(--drag, 0px));
 }
 
 .ov-head {
@@ -809,19 +915,21 @@ ul {
 .cart-row {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 10px;
+    gap: 12px;
+    padding: 12px;
     background: var(--surface);
     border: 1px solid var(--line);
-    border-radius: 14px;
+    border-radius: 16px;
+    box-shadow: var(--card-shadow);
 }
 
 .thumb {
-    width: 46px;
-    height: 46px;
+    width: 54px;
+    height: 54px;
     object-fit: contain;
-    border-radius: 10px;
-    background: var(--surface-2);
+    border-radius: 12px;
+    background: linear-gradient(165deg, #fbfcff, #e6ecf6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     flex: none;
     cursor: zoom-in;
 }
@@ -870,8 +978,8 @@ ul {
 }
 
 .stepper button {
-    width: 30px;
-    height: 30px;
+    width: 34px;
+    height: 34px;
     border-radius: 999px;
     display: flex;
     align-items: center;
@@ -896,8 +1004,8 @@ ul {
 }
 
 .stepper input {
-    width: 40px;
-    height: 30px;
+    width: 44px;
+    height: 34px;
     text-align: center;
     background: transparent;
     border: 0;
@@ -1123,8 +1231,7 @@ ul {
     align-items: center;
     justify-content: center;
     padding: 20px;
-    background: rgba(5, 8, 14, 0.65);
-    backdrop-filter: blur(3px);
+    background: rgba(5, 8, 14, 0.7);
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.2s, visibility 0.2s;
@@ -1282,7 +1389,252 @@ ul {
     line-height: 1.35;
 }
 
+/* =========================================================
+   HIỆU ỨNG — bản nhẹ cho Android
+   Chỉ dùng transform / opacity, mỗi lúc chỉ vài phần tử chuyển động.
+   Không blur nền, không animation vô hạn trên phần tử lớn.
+   ========================================================= */
+
+/* --- thẻ sản phẩm --- */
+
+/* Chỉ chạy một lần lúc mở app, không chạy lại mỗi lần lọc/tìm. */
+.product-container.intro .product {
+    animation: cardIn 0.34s var(--ease) backwards;
+    animation-delay: calc(var(--i, 0) * 14ms);
+}
+
+@keyframes cardIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.98);
+    }
+}
+
+.product.just-added {
+    animation: cardPop 0.3s var(--ease);
+    animation-delay: 0s;
+}
+
+@keyframes cardPop {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.04); }
+    100% { transform: scale(1); }
+}
+
+/* Vệt sáng dưới ngón tay, chỉ vẽ khi đang chạm. */
+.product::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+    background: radial-gradient(180px circle at var(--mx, 50%) var(--my, 50%), rgba(255, 160, 40, 0.2), transparent 70%);
+    opacity: 0;
+    transition: opacity 0.2s linear;
+    pointer-events: none;
+}
+
+.product.touching::before {
+    opacity: 1;
+}
+
+/* Nhấn xuống thì thẻ lún nhẹ — phản hồi cho ngón tay, tự nhả khi thôi chạm. */
+.product.touching {
+    transform: scale(0.972);
+    border-color: rgba(255, 160, 40, 0.55);
+}
+
+/* --- gợn sóng khi chạm nút --- */
+
+.mini-btn,
+.row-del,
+.stepper button,
+.sidebar-link {
+    position: relative;
+    overflow: hidden;
+}
+
+.card-minus {
+    overflow: hidden;
+}
+
+.ripple {
+    position: absolute;
+    z-index: 3;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0) 70%);
+    transform: scale(0);
+    opacity: 0.8;
+    pointer-events: none;
+    animation: rippleOut 0.45s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+
+@keyframes rippleOut {
+    to {
+        transform: scale(1);
+        opacity: 0;
+    }
+}
+
+/* --- thanh trên khi cuộn --- */
+
+#top-bar {
+    transition: box-shadow 0.24s var(--ease), border-color 0.24s;
+}
+
+#top-bar.scrolled {
+    border-bottom-color: #3f4f73;
+    box-shadow: 0 12px 30px -22px rgba(0, 0, 0, 0.98);
+}
+
+/* --- danh mục trượt vào lần lượt --- */
+
+#sidebar.open #categories li {
+    animation: sideIn 0.26s var(--ease) backwards;
+    animation-delay: calc(var(--i, 0) * 18ms);
+}
+
+@keyframes sideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-12px);
+    }
+}
+
+#categories li.active {
+    box-shadow: inset 0 0 20px -8px rgba(255, 160, 40, 0.5);
+}
+
+/* --- tấm trượt --- */
+
+/* Tay nắm nhỏ trên tiêu đề, kéo xuống để đóng. */
+.ov-head {
+    position: relative;
+    padding-top: 18px;
+    touch-action: none;
+}
+
+.ov-head::before {
+    content: "";
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    width: 40px;
+    height: 4px;
+    margin-left: -20px;
+    border-radius: 99px;
+    background: var(--surface-3);
+}
+
+.overlay.dragging {
+    transition: none;
+    transform: translateY(var(--drag, 0px));
+}
+
+/* App lùi lại phía sau cho có chiều sâu. Chỉ transform, không filter. */
+#app {
+    transition: transform 0.32s var(--ease);
+    transform-origin: 50% 30%;
+}
+
+body.sheet-open #app {
+    transform: scale(0.975);
+}
+
+.overlay.open .ov-body > * {
+    animation: sheetChild 0.3s var(--ease) backwards;
+    animation-delay: calc(var(--i, 0) * 24ms);
+}
+
+@keyframes sheetChild {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+}
+
+/* --- nút lên đầu --- */
+
+.scroll-top {
+    position: fixed;
+    right: 14px;
+    bottom: calc(20px + env(safe-area-inset-bottom));
+    z-index: 150;
+    width: 46px;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 15px;
+    background: linear-gradient(150deg, var(--accent), var(--accent-2));
+    color: #2a1600;
+    border: 0;
+    box-shadow: 0 12px 26px -12px rgba(255, 140, 30, 0.95);
+    opacity: 0;
+    transform: translateY(14px) scale(0.9);
+    pointer-events: none;
+    transition: opacity 0.2s var(--ease), transform 0.26s var(--ease);
+}
+
+.scroll-top.show {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+}
+
+.scroll-top:active {
+    transform: scale(0.92);
+}
+
+.scroll-top .ico {
+    width: 20px;
+    height: 20px;
+    stroke-width: 2.4;
+}
+
+/* --- lặt vặt --- */
+
+.empty-state .ico.big {
+    animation: floaty 4s ease-in-out infinite;
+}
+
+@keyframes floaty {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+
+.toast.show {
+    animation: toastIn 0.36s cubic-bezier(0.2, 0.9, 0.3, 1.06);
+}
+
+@keyframes toastIn {
+    0% { transform: translate(-50%, 22px) scale(0.94); }
+    100% { transform: translate(-50%, 0) scale(1); }
+}
+
+.toast .toast-badge {
+    animation: badgeIn 0.32s var(--ease);
+}
+
+@keyframes badgeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+}
+
+#cart-count.bump {
+    animation: countBump 0.3s var(--ease);
+}
+
+@keyframes countBump {
+    0% { transform: scale(1); }
+    45% { transform: scale(1.25); }
+    100% { transform: scale(1); }
+}
+
 /* ---------------- responsive ---------------- */
+
 
 @media (min-width: 560px) {
     .product-container {
@@ -1327,5 +1679,20 @@ ul {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
+    }
+
+    .product-container.intro .product,
+    .product.just-added,
+    .overlay.open .ov-body > *,
+    #sidebar.open #categories li,
+    .empty-state .ico.big,
+    .toast.show,
+    .toast .toast-badge,
+    #cart-count.bump {
+        animation: none !important;
+    }
+
+    #app {
+        transition: none !important;
     }
 }
