@@ -1,12 +1,15 @@
 /* =========================================================
-   Service worker â€” app shell + cache áº£nh
-   Äá»•i VERSION má»—i láº§n deploy Ä‘á»ƒ buá»™c trÃ¬nh duyá»‡t láº¥y báº£n má»›i.
+   Service worker — app shell + cache ảnh
+   Đổi VERSION mỗi lần deploy để buộc trình duyệt lấy bản mới.
    ========================================================= */
 
-const VERSION = "3.4.1";
+const VERSION = "3.6.0";
 const SHELL_CACHE = `shell-${VERSION}`;
 const IMAGE_CACHE = `img-${VERSION}`;
 const MAX_IMAGES = 400;
+
+// Trang chủ giữ dưới một khoá cố định để điều hướng offline luôn có thứ để trả.
+const SHELL_URL = "./index.html";
 
 const SHELL_FILES = [
     "./",
@@ -23,11 +26,11 @@ self.addEventListener("install", (event) => {
     event.waitUntil(
         (async () => {
             const cache = await caches.open(SHELL_CACHE);
-            // Tá»«ng file má»™t: má»™t file lá»—i khÃ´ng lÃ m há»ng cáº£ láº§n cÃ i.
+            // Từng file một: một file lỗi không làm hỏng cả lần cài.
             await Promise.all(
                 SHELL_FILES.map((file) =>
                     cache.add(new Request(file, { cache: "reload" })).catch((err) => {
-                        console.warn("[sw] bá» qua", file, err);
+                        console.warn("[sw] bỏ qua", file, err);
                     })
                 )
             );
@@ -65,16 +68,22 @@ async function trimCache(cacheName, maxItems) {
     }
 }
 
+// Điều hướng: ưu tiên mạng, mất mạng thì trả bản đã lưu.
+// Chỉ ghi đè khoá trang chủ khi máy chủ thật sự trả về HTML — trước đây
+// một trang 404 hay file JSON cũng bị nhét vào chỗ của index.html.
 async function networkFirst(request) {
     const cache = await caches.open(SHELL_CACHE);
     try {
         const response = await fetch(request);
-        if (response && response.ok) cache.put("./index.html", response.clone());
+        const type = response.headers.get("content-type") || "";
+        if (response.ok && type.includes("text/html")) {
+            cache.put(SHELL_URL, response.clone());
+        }
         return response;
     } catch {
-        const cached = (await cache.match(request)) || (await cache.match("./index.html"));
+        const cached = (await cache.match(request)) || (await cache.match(SHELL_URL));
         if (cached) return cached;
-        throw new Error("offline vÃ  khÃ´ng cÃ³ báº£n cache");
+        throw new Error("offline và không có bản cache");
     }
 }
 
