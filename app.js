@@ -80,7 +80,11 @@ const STORE = {
     history: "historyLog",
     checking: "checkingList",
     trash: "trashList",
+    category: "lastCategory",
 };
+
+// Chặn số lượng vô lý khi giữ tay lâu hoặc gõ tay vào ô số.
+const MAX_QTY = 999;
 
 function readJSON(key, fallback) {
     try {
@@ -101,6 +105,45 @@ function writeJSON(key, value) {
         console.warn("Không lưu được vào localStorage:", key, err);
         return false;
     }
+}
+
+/* ---------------- giao diện sáng / tối ---------------- */
+
+// Mặc định là tối; lựa chọn lưu trong localStorage và được áp trước khi vẽ
+// bằng đoạn script nhỏ trong <head>, nên không bị nháy trắng.
+const THEME_KEY = "theme";
+
+function currentTheme() {
+    return document.documentElement.dataset.theme === "light" ? "light" : "dark";
+}
+
+function paintTheme(theme) {
+    const value = theme === "light" ? "light" : "dark";
+    document.documentElement.dataset.theme = value;
+
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute("content", value === "light" ? "#ffffff" : "#0f1420");
+
+    const btn = $("#theme-btn");
+    if (!btn) return;
+    btn.setAttribute("aria-label", `Chuyển sang chế độ ${value === "dark" ? "sáng" : "tối"}`);
+    btn.setAttribute("aria-pressed", value === "dark" ? "true" : "false");
+    const use = btn.querySelector("use");
+    if (use) use.setAttribute("href", value === "dark" ? "#i-sun" : "#i-moon");
+}
+
+function setTheme(theme) {
+    const value = theme === "light" ? "light" : "dark";
+    try {
+        localStorage.setItem(THEME_KEY, value);
+    } catch {
+        /* chế độ riêng tư: không lưu được thì vẫn đổi trong phiên này */
+    }
+    paintTheme(value);
+}
+
+function toggleTheme() {
+    setTheme(currentTheme() === "dark" ? "light" : "dark");
 }
 
 /* ---------------- dữ liệu ---------------- */
@@ -142,18 +185,18 @@ function buildCatalog() {
     }
 }
 
-function imagePath(name, ext = "webp") {
+function imagePath(name, ext = "jpg") {
     const category = categoryOf.get(name) || "Khác";
     return `./images/${category}/${toFileName(name)}.${ext}`;
 }
 
-// webp -> jpg -> placeholder. Mỗi ảnh chỉ thử tối đa 2 nguồn rồi dừng,
-// nên không lặp vô hạn như bản cũ.
+// jpg -> webp -> placeholder. Ảnh trong kho đều là jpg nên thử jpg trước:
+// mỗi lần mở app đỡ 172 lần 404. Mỗi ảnh chỉ thử tối đa 2 nguồn rồi dừng.
 function attachImage(img, name) {
     img.loading = "lazy";
     img.decoding = "async";
 
-    const sources = [imagePath(name, "webp"), imagePath(name, "jpg")];
+    const sources = [imagePath(name, "jpg"), imagePath(name, "webp")];
     let index = 0;
 
     // Ảnh hiện dần. Gắn class một lần, gỡ listener ngay.
@@ -191,6 +234,7 @@ let trashList = [];
 
 let currentCategory = "Tất cả";
 let searchQuery = "";
+let searchUiActive = false; // trạng thái tìm kiếm lần vẽ trước, để biết khi nào phải vẽ lại dải chip
 const cardByName = new Map();
 
 // Bản cũ lưu danh sách kiểm hàng dạng mảng chuỗi -> nâng cấp sang {id, text}
@@ -299,6 +343,7 @@ function openOverlay(id, onOpen) {
     overlay.setAttribute("aria-hidden", "false");
     overlayStack.push(id);
     syncSheetState();
+    syncTabs();
     if (typeof onOpen === "function") onOpen();
     staggerSheet(overlay);
 }
@@ -311,6 +356,24 @@ function closeOverlay(id) {
     const idx = overlayStack.lastIndexOf(id);
     if (idx >= 0) overlayStack.splice(idx, 1);
     syncSheetState();
+    syncTabs();
+}
+
+// Tô sáng tab dưới đáy đúng với tấm đang mở.
+function syncTabs() {
+    const map = {
+        "cart-overlay": "cart-icon",
+        "note-overlay": "note-icon",
+        "trash-overlay": "note-icon",
+        "history-overlay": "history-btn",
+    };
+    const current = overlayStack[overlayStack.length - 1];
+    const activeId = map[current] || "tab-home";
+    $$("#tab-bar .tab").forEach((tab) => {
+        tab.classList.toggle("active", tab.id === activeId);
+        if (tab.id === activeId) tab.setAttribute("aria-current", "page");
+        else tab.removeAttribute("aria-current");
+    });
 }
 
 // Kéo thanh tiêu đề xuống để đóng, chỉ trên cảm ứng.
@@ -382,21 +445,6 @@ function closeTopLayer() {
     if ($("#image-zoom-overlay")?.classList.contains("open")) return closeZoom();
     const top = overlayStack[overlayStack.length - 1];
     if (top) return closeOverlay(top);
-    if ($("#sidebar")?.classList.contains("open")) closeSidebar();
-}
-
-function openSidebar() {
-    $("#sidebar")?.classList.add("open");
-    $("#sidebar")?.setAttribute("aria-hidden", "false");
-    $("#scrim")?.classList.add("show");
-    $("#menu-btn")?.setAttribute("aria-expanded", "true");
-}
-
-function closeSidebar() {
-    $("#sidebar")?.classList.remove("open");
-    $("#sidebar")?.setAttribute("aria-hidden", "true");
-    $("#scrim")?.classList.remove("show");
-    $("#menu-btn")?.setAttribute("aria-expanded", "false");
 }
 
 /* ---------------- zoom ảnh ---------------- */
@@ -406,8 +454,8 @@ function openZoom(src, alt) {
     const img = $("#zoomed-image");
     if (!overlay || !img) return;
 
-    // Nếu bản webp thiếu thì rơi về jpg gốc, cuối cùng là ảnh giữ chỗ.
-    const fallback = src.replace(/\.webp$/i, ".jpg");
+    // Nếu bản jpg thiếu thì rơi về webp, cuối cùng là ảnh giữ chỗ.
+    const fallback = src.replace(/\.jpg$/i, ".webp");
     img.onerror = () => {
         img.onerror = () => {
             img.onerror = null;
@@ -494,6 +542,7 @@ function updateCartBadge() {
     const totalCount = $("#cart-total-count");
     if (count) {
         count.textContent = total;
+        count.hidden = total === 0;
         // Nhảy nhẹ khi số lượng đổi, không nhảy lúc mới mở app.
         if (lastCartTotal !== null && total !== lastCartTotal) {
             count.classList.remove("bump");
@@ -503,19 +552,34 @@ function updateCartBadge() {
         }
     }
     if (totalCount) totalCount.textContent = `(${total})`;
+
+    const label = $("#copy-label");
+    if (label) label.textContent = total > 0 ? `Sao chép (${total} món)` : "Sao chép danh sách";
+
     lastCartTotal = total;
 }
 
-function addProduct(name, sourceEl, event) {
-    cart[name] = (cart[name] || 0) + 1;
-    logHistory(cart[name] === 1 ? "thêm mới" : "tăng", name, cart[name]);
+function bumpQty(name) {
+    const qty = Math.min(MAX_QTY, (cart[name] || 0) + 1);
+    if (qty === cart[name]) return qty;
+    cart[name] = qty;
+    logHistory(qty === 1 ? "thêm mới" : "tăng", name, qty);
     saveCart();
     syncCard(name, true);
     updateCartBadge();
+    return qty;
+}
+
+function addProduct(name, sourceEl, event) {
+    bumpQty(name);
+
     if (sourceEl) {
         pulseBadge(sourceEl);
         popCard(sourceEl);
     }
+
+    // Người lớn tuổi cần xác nhận rõ ràng: đã thêm món gì, giỏ đang có bao nhiêu.
+    toast(`Đã thêm: ${name} · giỏ có ${cartCount()} món`, "success", 1500);
 
     const point = event && typeof event.clientX === "number" && event.clientX
         ? { x: event.clientX, y: event.clientY }
@@ -547,7 +611,13 @@ function decProduct(name) {
 }
 
 function setQty(name, value) {
-    const qty = Math.max(0, Math.floor(Number(value) || 0));
+    const raw = String(value == null ? "" : value).trim();
+    // Ô số bị xoá trắng không có nghĩa là xoá món — trả lại số cũ.
+    if (!raw) {
+        renderCart();
+        return;
+    }
+    const qty = Math.max(0, Math.min(MAX_QTY, Math.floor(Number(raw) || 0)));
     if (qty === 0) {
         removeProduct(name);
         return;
@@ -563,13 +633,24 @@ function setQty(name, value) {
 
 function removeProduct(name) {
     if (!(name in cart)) return;
+    const qty = cart[name];
     delete cart[name];
     logHistory("xoá", name, 0);
     saveCart();
     syncCard(name);
     renderCart();
     updateCartBadge();
-    toast(`Đã xoá "${name}"`, "info", 1600);
+
+    toast(`Đã xoá "${name}" · chạm để hoàn tác`, "info", 4500, () => {
+        if (name in cart) return;
+        cart[name] = qty;
+        logHistory("hoàn tác", name, qty);
+        saveCart();
+        syncCard(name);
+        renderCart();
+        updateCartBadge();
+        toast(`Đã trả lại "${name}"`, "success", 1500);
+    });
 }
 
 function clearAllCart() {
@@ -579,13 +660,24 @@ function clearAllCart() {
     }
     showConfirm("Bạn có chắc muốn <strong>XÓA SẠCH</strong> giỏ hàng không?", (ok) => {
         if (!ok) return;
+        const previous = cart;
         cart = {};
         logHistory("xoá toàn bộ", "Tất cả sản phẩm", 0);
         saveCart();
         for (const name of cardByName.keys()) syncCard(name);
         renderCart();
         updateCartBadge();
-        toast("Đã xoá sạch giỏ hàng", "success");
+
+        toast("Đã xoá sạch giỏ hàng · chạm để hoàn tác", "success", 5000, () => {
+            if (Object.keys(cart).length) return;
+            cart = previous;
+            logHistory("hoàn tác", "Tất cả sản phẩm", cartCount());
+            saveCart();
+            for (const name of cardByName.keys()) syncCard(name);
+            renderCart();
+            updateCartBadge();
+            toast("Đã trả lại giỏ hàng", "success", 1500);
+        });
     });
 }
 
@@ -720,6 +812,30 @@ function copyList() {
     });
 }
 
+// Gửi danh sách qua Zalo / Messenger / Tin nhắn bằng hộp chia sẻ của máy.
+function shareList() {
+    const text = cartCopyText();
+    if (!text) {
+        toast("Giỏ hàng đang trống", "info");
+        return;
+    }
+
+    if (typeof navigator.share === "function") {
+        navigator.share({ title: "Tạp Hóa Thanh Trúc", text }).catch(() => {
+            // Người dùng đóng hộp chia sẻ thì im lặng, lỗi thật mới sao chép.
+        });
+        return;
+    }
+
+    writeClipboard(text).then((ok) => {
+        toast(
+            ok ? "Máy không có hộp chia sẻ — đã sao chép danh sách" : "Không chia sẻ được",
+            ok ? "success" : "error",
+            2800
+        );
+    });
+}
+
 /* ---------------- sản phẩm ---------------- */
 
 function syncCard(name, pulse = false) {
@@ -784,12 +900,38 @@ function buildCard(name, index) {
     return card;
 }
 
+// Đang gõ tìm kiếm thì bỏ qua bộ lọc danh mục: gõ "sữa" lúc đang ở
+// mục "Khác" vẫn phải ra sữa, không được báo danh mục trống.
+function searchActive() {
+    return collapse(searchQuery).length > 0;
+}
+
+function saveCategory() {
+    try {
+        localStorage.setItem(STORE.category, currentCategory);
+    } catch {
+        /* chế độ riêng tư: không lưu được thì thôi */
+    }
+}
+
+function restoreCategory() {
+    let saved = "";
+    try {
+        saved = localStorage.getItem(STORE.category) || "";
+    } catch {
+        saved = "";
+    }
+    if (!saved) return;
+    if (saved !== "Tất cả" && !categoryNames.includes(saved)) return;
+    currentCategory = saved;
+}
+
 // Câu trong trạng thái rỗng: nói rõ đang lọc cái gì.
 function updateEmptyText() {
     const text = $("#empty-text");
     if (!text) return;
     const q = searchQuery.trim();
-    if (q) {
+    if (searchActive()) {
         text.textContent = `Không có món nào khớp “${q}”`;
     } else if (currentCategory !== "Tất cả") {
         text.textContent = `Mục “${currentCategory}” chưa có món nào`;
@@ -812,8 +954,8 @@ function updateListMeta(shown) {
     const frag = document.createDocumentFragment();
     const strong = el("b", null, String(shown));
 
-    if (searchQuery.trim()) {
-        frag.append("Tìm thấy ", strong, " kết quả cho “", searchQuery.trim(), "”");
+    if (searchActive()) {
+        frag.append("Tìm thấy ", strong, " kết quả cho “", searchQuery.trim(), "” · tất cả danh mục");
     } else if (currentCategory !== "Tất cả") {
         frag.append(strong, " sản phẩm · ", currentCategory);
     } else {
@@ -834,7 +976,7 @@ function renderProducts({ intro = false } = {}) {
     let index = 0;
 
     for (const item of catalog) {
-        if (currentCategory !== "Tất cả" && item.category !== currentCategory) continue;
+        if (!searchActive() && currentCategory !== "Tất cả" && item.category !== currentCategory) continue;
         if (!matchesSearch(item.name, searchQuery)) continue;
         frag.appendChild(buildCard(item.name, index));
         shown++;
@@ -869,14 +1011,24 @@ function renderCategories() {
     const makeItem = (label, value, count, index) => {
         const li = el("li");
         li.dataset.category = value;
-        if (currentCategory === value) li.classList.add("active");
+        // Đang tìm kiếm thì kết quả trải khắp danh mục, không chip nào là "đang chọn".
+        if (!searchActive() && currentCategory === value) li.classList.add("active");
         if (index < 9) li.style.setProperty("--i", index);
         li.append(el("span", "cat-name", label), el("span", "cat-count", String(count)));
         li.addEventListener("click", () => {
             currentCategory = value;
+            // Chọn danh mục là bỏ từ khoá, nếu không sẽ nhìn thấy danh mục rỗng.
+            if (searchActive()) {
+                searchQuery = "";
+                searchUiActive = false;
+                const box = $("#search-box");
+                if (box) box.value = "";
+                const clear = $("#search-clear");
+                if (clear) clear.hidden = true;
+            }
+            saveCategory();
             renderCategories();
             renderProducts();
-            closeSidebar();
         });
         return li;
     };
@@ -885,6 +1037,15 @@ function renderCategories() {
     categoryNames.forEach((category, i) => {
         list.appendChild(makeItem(category, category, counts.get(category) || 0, i + 1));
     });
+
+    // Đưa chip đang chọn vào giữa dải để không phải tự tìm.
+    const active = list.querySelector("li.active");
+    if (active && list.scrollWidth > list.clientWidth) {
+        list.scrollTo({
+            left: Math.max(0, active.offsetLeft - (list.clientWidth - active.offsetWidth) / 2),
+            behavior: "smooth",
+        });
+    }
 }
 
 /* ---------------- kiểm hàng / thùng rác ---------------- */
@@ -1127,7 +1288,7 @@ function bindCardFeedback() {
 
 // Gợn sóng cho nút bấm.
 function bindButtonFeedback() {
-    const selector = ".btn, .icon-btn, .mini-btn, .row-del, .card-minus, .stepper button, .sidebar-link";
+    const selector = ".btn, .icon-btn, .mini-btn, .row-del, .card-minus, .stepper button";
     document.addEventListener(
         "pointerdown",
         (event) => {
@@ -1287,12 +1448,46 @@ function bindEvents() {
         if (!card) return;
         const name = card.dataset.name;
         if (!name) return;
+        // Cú bấm này là hệ quả của lần giữ tay vừa rồi — bỏ qua.
+        if (hold.suppressClick) {
+            hold.suppressClick = false;
+            return;
+        }
         if (event.target.closest("[data-act='dec']")) {
             event.stopPropagation();
             decProduct(name);
         } else {
             addProduct(name, card, event);
         }
+    });
+
+    // Giữ tay để cộng nhiều: hợp khi đi lấy cả thùng, khỏi bấm mười mấy lần.
+    container?.addEventListener(
+        "pointerdown",
+        (event) => {
+            if (event.pointerType === "mouse" && event.button !== 0) return;
+            if (event.target.closest("[data-act='dec']")) return;
+            const card = event.target.closest(".product");
+            if (!card || !card.dataset.name) return;
+            startHold(card.dataset.name, card);
+        },
+        { passive: true }
+    );
+
+    const endHold = () => stopHold();
+    container?.addEventListener("pointerup", endHold, { passive: true });
+    container?.addEventListener("pointercancel", endHold, { passive: true });
+    container?.addEventListener("pointerleave", endHold, { passive: true });
+    container?.addEventListener(
+        "scroll",
+        () => {
+            if (hold.name) stopHold();
+        },
+        { passive: true }
+    );
+    window.addEventListener("blur", endHold);
+    document.addEventListener("visibilitychange", () => {
+        if (document.hidden) stopHold();
     });
 
     container?.addEventListener("keydown", (event) => {
@@ -1303,14 +1498,29 @@ function bindEvents() {
         addProduct(card.dataset.name, card, null);
     });
 
-    $("#menu-btn")?.addEventListener("click", openSidebar);
-    $("#scrim")?.addEventListener("click", closeSidebar);
-    $$("[data-close-sidebar]").forEach((btn) => btn.addEventListener("click", closeSidebar));
+    // Tab "Hàng": đóng mọi tấm đang mở, đưa danh sách về đầu.
+    $("#tab-home")?.addEventListener("click", () => {
+        closeAllOverlays();
+        closeZoom();
+        const list = $("#product-container");
+        if (list) list.scrollTo({ top: 0, behavior: reduceMotion.matches ? "auto" : "smooth" });
+        const box = $("#search-box");
+        if (box) box.blur();
+    });
+
+    $("#theme-btn")?.addEventListener("click", toggleTheme);
+    $("#update-btn-top")?.addEventListener("click", forceUpdate);
 
     const search = $("#search-box");
     const searchClear = $("#search-clear");
     const runSearch = debounce(() => {
         searchQuery = search.value;
+        // Bật/tắt tìm kiếm thì vẽ lại dải chip: đang tìm thì không chip nào là "đang chọn".
+        const active = searchActive();
+        if (active !== searchUiActive) {
+            searchUiActive = active;
+            renderCategories();
+        }
         renderProducts();
     }, 90);
 
@@ -1323,6 +1533,8 @@ function bindEvents() {
         search.value = "";
         searchClear.hidden = true;
         searchQuery = "";
+        searchUiActive = false;
+        renderCategories();
         renderProducts();
         search.focus();
     });
@@ -1331,24 +1543,21 @@ function bindEvents() {
         if (search) search.value = "";
         if (searchClear) searchClear.hidden = true;
         searchQuery = "";
+        searchUiActive = false;
         currentCategory = "Tất cả";
+        saveCategory();
         renderCategories();
         renderProducts();
     });
 
     $("#cart-icon")?.addEventListener("click", () => openOverlay("cart-overlay", renderCart));
     $("#note-icon")?.addEventListener("click", () => openOverlay("note-overlay", renderChecking));
-    $("#history-btn")?.addEventListener("click", () => {
-        closeSidebar();
-        openOverlay("history-overlay", renderHistory);
-    });
-    $("#update-btn")?.addEventListener("click", () => {
-        closeSidebar();
-        forceUpdate();
-    });
+    $("#history-btn")?.addEventListener("click", () => openOverlay("history-overlay", renderHistory));
+    $("#update-btn")?.addEventListener("click", forceUpdate);
 
     $("#clear-all-btn")?.addEventListener("click", clearAllCart);
     $("#copyBtn")?.addEventListener("click", copyList);
+    $("#shareBtn")?.addEventListener("click", shareList);
     $("#clear-all-note")?.addEventListener("click", clearAllNote);
     $("#clear-all-trash")?.addEventListener("click", clearAllTrash);
     $("#clear-history")?.addEventListener("click", () => {
@@ -1454,11 +1663,12 @@ function bindEvents() {
             renderChecking();
             renderTrash();
         }
+        if (event.key === THEME_KEY) paintTheme(currentTheme());
     });
 }
 
 function changeQtyBy(name, delta) {
-    const qty = (cart[name] || 0) + delta;
+    const qty = Math.min(MAX_QTY, (cart[name] || 0) + delta);
     if (qty <= 0) {
         removeProduct(name);
         return;
@@ -1471,10 +1681,67 @@ function changeQtyBy(name, delta) {
     updateCartBadge();
 }
 
+/* ---------------- giữ tay để thêm nhiều ---------------- */
+
+// Giữ một thẻ sản phẩm: sau 420ms bắt đầu cộng đều 220ms một cái.
+// Nhả tay thì chặn luôn cú bấm sinh ra sau đó, kẻo cộng thêm một lần nữa.
+const hold = {
+    timer: 0,
+    interval: 0,
+    name: "",
+    card: null,
+    added: 0,
+    suppressClick: false,
+};
+
+function stopHold() {
+    clearTimeout(hold.timer);
+    clearInterval(hold.interval);
+    hold.timer = 0;
+    hold.interval = 0;
+
+    if (hold.added > 0) {
+        hold.suppressClick = true;
+        toast(`Đã thêm ${hold.added} × ${hold.name}`, "success", 1600);
+        if (hold.card) popCard(hold.card);
+    }
+
+    hold.name = "";
+    hold.card = null;
+    hold.added = 0;
+}
+
+function startHold(name, card) {
+    if (!name) return;
+    stopHold();
+    hold.suppressClick = false;
+    hold.name = name;
+    hold.card = card;
+
+    hold.timer = setTimeout(() => {
+        if (!hold.name) return;
+        hold.interval = setInterval(() => {
+            if (!hold.name) return;
+            if ((cart[hold.name] || 0) >= MAX_QTY) {
+                stopHold();
+                return;
+            }
+            bumpQty(hold.name);
+            hold.added += 1;
+        }, 220);
+    }, 420);
+}
+
+function closeAllOverlays() {
+    for (const id of overlayStack.slice()) closeOverlay(id);
+}
+
 /* ---------------- khởi động ---------------- */
 
 function init() {
     buildCatalog();
+    restoreCategory();
+    paintTheme(currentTheme());
     renderCategories();
     renderProducts({ intro: true });
     renderCart();
